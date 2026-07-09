@@ -78,15 +78,23 @@ export default function App() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
+  // Helper to parse subView from URL hash
+  const getSubViewFromHash = () => {
+    const hash = window.location.hash;
+    if (hash.startsWith('#/')) {
+      return hash.slice(2);
+    }
+    return 'hub';
+  };
+
   // Navigation: 'hub' | 'create_select' | 'create_form' | 'active' | 'history' | 'ticket_detail'
-  const [subView, setSubView] = useState('hub');
+  const [subView, _setSubView] = useState(getSubViewFromHash());
+  const setSubView = (view) => {
+    window.location.hash = `#/${view}`;
+  };
   const [previousView, setPreviousView] = useState('active'); // Remembers origin before entering detail screen
   const [selectedCategory, setSelectedCategory] = useState('');
   const profileRef = useRef(null);
-
-  // Swipe-back gesture tracking
-  const touchStartX = useRef(null);
-  const touchStartY = useRef(null);
 
   const getFormattedDateTime = () => {
     const now = new Date();
@@ -265,42 +273,23 @@ export default function App() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Swipe-back gesture: left-to-right swipe navigates to the parent view
+  // Sync URL hash with subView state
   useEffect(() => {
-    const backMap = {
-      'create_select': 'hub',
-      'create_form': 'create_select',
-      'active': 'hub',
-      'history': 'hub',
-      'ticket_detail': previousView,
+    const handleHashChange = () => {
+      const view = getSubViewFromHash();
+      _setSubView(view);
     };
+    window.addEventListener('hashchange', handleHashChange);
 
-    const handleTouchStart = (e) => {
-      touchStartX.current = e.touches[0].clientX;
-      touchStartY.current = e.touches[0].clientY;
-    };
+    // Set initial hash if none exists
+    if (!window.location.hash) {
+      window.location.hash = '#/hub';
+    }
 
-    const handleTouchEnd = (e) => {
-      if (touchStartX.current === null) return;
-      const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-      const deltaY = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
-      touchStartX.current = null;
-      touchStartY.current = null;
-
-      // Only trigger on horizontal swipes (deltaX > 75px, and more horizontal than vertical)
-      if (deltaX > 75 && deltaX > deltaY) {
-        const target = backMap[subView];
-        if (target) setSubView(target);
-      }
-    };
-
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchend', handleTouchEnd, { passive: true });
     return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('hashchange', handleHashChange);
     };
-  }, [subView, previousView]);
+  }, []);
 
   const triggerNotification = (message) => {
     setNotification(message);
