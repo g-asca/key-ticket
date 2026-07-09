@@ -495,6 +495,20 @@ export default function App() {
     <div className="w-full min-h-screen bg-[#fafbfc] flex flex-col justify-start items-center ms-font select-none">
       <AzureStyleOverride />
 
+      {/* SVG Filter to remove white background from PNG logo */}
+      <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }}>
+        <defs>
+          <filter id="remove-white">
+            <feColorMatrix type="matrix" values="
+              1 0 0 0 0
+              0 1 0 0 0
+              0 0 1 0 0
+              -2 -2 -2 5.8 0
+            " />
+          </filter>
+        </defs>
+      </svg>
+
       {/* Dynamic Global Top Banner Alerts */}
       {notification && (
         <div className="fixed top-16 left-4 right-4 z-[9999] bg-[#111111] text-white text-sm px-4 py-3.5 rounded-xl shadow-xl flex items-center justify-between gap-3 border border-neutral-800 fade-in">
@@ -510,34 +524,32 @@ export default function App() {
 
       {!isLoggedIn ? (
         /* ================= MAIN MINIMALIST LOGIN PAGE ================= */
-        <div className="w-full min-h-screen flex flex-col items-center justify-center p-4">
-          <div className="flex flex-col items-center text-center space-y-7 -mt-16 fade-in">
+        <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 bg-white">
+          <div className="flex flex-col items-center text-center space-y-8 -mt-16 fade-in">
 
-            {/* Minimalist Corporate Logo */}
-            <div className="relative w-20 h-20 flex items-center justify-center bg-white rounded-[22px] shadow-sm border border-neutral-100">
-              <img src={logoImg} alt="Key-Ticket Logo" className="w-14 h-14 object-contain" />
-            </div>
+            {/* Clean Logo without box */}
+            <img src={logoImg} alt="Key Ticket Logo" className="w-[180px] h-[150px] object-contain" style={{ filter: 'url(#remove-white)' }} />
 
             {/* Title below logo */}
-            <div>
-              <h1 className="text-[34px] font-semibold text-[#1b1b1b] tracking-tight">
-                Key-Ticket
+            <div className="pb-2">
+              <h1 className="text-[30px] font-light text-[#4a4a4a] tracking-[0.18em] uppercase">
+                Key Ticket
               </h1>
             </div>
 
-            {/* Authentic Microsoft style Sign In button with right facing arrow */}
-            <div className="pt-2">
+            {/* Teal Sign In button */}
+            <div>
               {isLoggingIn ? (
-                <div className="flex items-center justify-center w-[180px] h-[40px] bg-[#0067b8]">
+                <div className="flex items-center justify-center w-[180px] h-[45px] bg-[#009b96]">
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                 </div>
               ) : (
                 <button
                   onClick={handleSignIn}
-                  className="flex items-center justify-center gap-3 bg-[#0067b8] hover:bg-[#005da6] active:bg-[#005292] text-white min-w-[180px] h-[40px] px-6 py-2 text-[15px] font-normal transition-all duration-150 shadow-sm rounded-none border-none cursor-pointer"
+                  className="flex items-center justify-center gap-2 bg-[#009b96] hover:bg-[#008782] active:bg-[#00736e] text-white w-[180px] h-[45px] text-[15px] font-normal transition-all duration-150 border-none cursor-pointer"
                 >
-                  <span>Sign in</span>
-                  <ArrowRight size={16} strokeWidth={2.5} />
+                  <span>Sign In</span>
+                  <span className="text-[16px] translate-y-[-1px] font-light">&rarr;</span>
                 </button>
               )}
             </div>
@@ -552,9 +564,7 @@ export default function App() {
           <header className="w-full h-14 bg-[#1e1e1e] border-b border-[#2d2d2d] px-4 flex justify-between items-center z-50 shadow-sm shrink-0">
 
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 flex items-center justify-center bg-white rounded-lg">
-                <img src={logoImg} alt="Key-Ticket Logo" className="w-[22px] h-[22px] object-contain" />
-              </div>
+              <img src={logoImg} alt="Key-Ticket Logo" className="w-7 h-7 object-contain" style={{ filter: 'url(#remove-white)' }} />
               <span className="text-[14px] font-semibold text-white tracking-wide">
                 Key-Ticket
               </span>
