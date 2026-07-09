@@ -273,23 +273,34 @@ export default function App() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Sync URL hash with subView state
+  // Sync URL hash with subView state and enforce login view if unauthenticated
   useEffect(() => {
     const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (!isLoggedIn && hash !== '#/login') {
+        window.location.hash = '#/login';
+        return;
+      }
+      if (isLoggedIn && (hash === '#/login' || hash === '')) {
+        window.location.hash = '#/hub';
+        return;
+      }
       const view = getSubViewFromHash();
       _setSubView(view);
     };
     window.addEventListener('hashchange', handleHashChange);
 
-    // Set initial hash if none exists
-    if (!window.location.hash) {
+    // Set initial redirect based on auth status
+    if (!isLoggedIn) {
+      window.location.hash = '#/login';
+    } else if (!window.location.hash || window.location.hash === '#/login') {
       window.location.hash = '#/hub';
     }
 
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
     };
-  }, []);
+  }, [isLoggedIn]);
 
   const triggerNotification = (message) => {
     setNotification(message);
@@ -541,11 +552,11 @@ export default function App() {
           <header className="w-full h-14 bg-[#1e1e1e] border-b border-[#2d2d2d] px-4 flex justify-between items-center z-50 shadow-sm shrink-0">
 
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 flex items-center justify-center bg-[#00a49f] rounded-lg">
-                <TicketLogoIcon className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 flex items-center justify-center bg-white rounded-lg">
+                <img src={logoImg} alt="Key-Ticket Logo" className="w-[22px] h-[22px] object-contain" />
               </div>
               <span className="text-[14px] font-semibold text-white tracking-wide">
-                Key Ticket
+                Key-Ticket
               </span>
             </div>
 
