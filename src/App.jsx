@@ -22,7 +22,8 @@ import {
   UserCheck,
   Trash2,
   UploadCloud,
-  Paperclip
+  Paperclip,
+  Users
 } from 'lucide-react';
 
 import logoImg from './assets/media__1783603526191.png';
@@ -153,6 +154,9 @@ export default function App() {
   const [formAttachments, setFormAttachments] = useState([]);
 
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [draftTicket, setDraftTicket] = useState(null);
+  const [showCancelWarning, setShowCancelWarning] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState('hub');
   const [newCommentText, setNewCommentText] = useState('');
   const [ticketComments, setTicketComments] = useState({
     'KT-1004': [
@@ -162,6 +166,13 @@ export default function App() {
       { author: 'System Operator', text: 'Token cache reset successfully, waiting for client refresh.', date: '09/07/2026 09:12' }
     ]
   });
+
+  const mockTeamMembers = [
+    { name: 'Marco Rossi', role: 'Agente Senior', avatar: 'MR', open: 2, resolved: 12 },
+    { name: 'Laura Conti', role: 'Agente', avatar: 'LC', open: 1, resolved: 8 },
+    { name: 'Andrea Ferri', role: 'Sviluppatore', avatar: 'AF', open: 1, resolved: 5 },
+    { name: 'Sara Mancini', role: 'Support Manager', avatar: 'SM', open: 0, resolved: 20 },
+  ];
 
   const mockCustomers = [
     { code: 'C001', desc: 'Alfa Distribuzione S.r.l.' },
@@ -447,21 +458,28 @@ export default function App() {
       attachmentsList: formAttachments
     };
 
+    setDraftTicket(newRequest);
+    setSubView('create_review');
+  };
+
+  const handleConfirmTicket = () => {
+    if (!draftTicket) return;
+
     // Save notes to comments state
     if (formNotes.length > 0) {
       const newComments = formNotes.map(note => ({
         author: 'Key-Ticket Agent',
         text: note,
-        date: currentFormattedTime
+        date: draftTicket.creationDate
       }));
       setTicketComments(prev => ({
         ...prev,
-        [nextId]: newComments
+        [draftTicket.id]: newComments
       }));
     }
 
-    setActiveTickets([newRequest, ...activeTickets]);
-    triggerNotification(`Richiesta ${nextId} (${selectedCategory}) salvata correttamente!`);
+    setActiveTickets([draftTicket, ...activeTickets]);
+    triggerNotification(`Richiesta ${draftTicket.id} (${draftTicket.category}) salvata correttamente!`);
 
     // Clear state
     setSelectedCustomer(null);
@@ -472,8 +490,33 @@ export default function App() {
     setFormDesc('');
     setFormNotes([]);
     setFormAttachments([]);
+    setFormUrgency('Medium');
+    setDraftTicket(null);
+    setSubView('active');
+  };
 
-    setSubView('hub');
+  const handleCancelForm = (target = 'hub') => {
+    setCancelTarget(target);
+    setShowCancelWarning(true);
+  };
+
+  const executeCancel = () => {
+    setShowCancelWarning(false);
+    setSelectedCustomer(null);
+    setSelectedItem(null);
+    setOldDate('');
+    setNewDate('');
+    setFormSubject('');
+    setFormDesc('');
+    setFormNotes([]);
+    setFormAttachments([]);
+    setFormUrgency('Medium');
+    setDraftTicket(null);
+    setSubView(cancelTarget);
+  };
+
+  const abortCancel = () => {
+    setShowCancelWarning(false);
   };
 
   const takeOwnership = (ticketId) => {
@@ -787,13 +830,13 @@ export default function App() {
             )}
 
             {subView === 'hub' && (
-              /* ================= SUB-VIEW: 3-ACTION HORIZONTAL/VERTICAL HUB ================= */
-              <div className="w-full flex flex-col items-center justify-center space-y-12 py-10 fade-in text-center">
+              /* ================= SUB-VIEW: 4-ACTION GRID HUB ================= */
+              <div className="w-full grid grid-cols-2 gap-y-12 gap-x-4 py-10 fade-in justify-items-center">
 
                 {/* 1. BUTTON: CREA (Teal Style) */}
                 <button
                   onClick={() => setSubView('create_select')}
-                  className="flex flex-col items-center text-center focus:outline-none select-none group w-44 py-2 cursor-pointer border-none bg-transparent"
+                  className="flex flex-col items-center text-center focus:outline-none select-none group w-36 py-2 cursor-pointer border-none bg-transparent"
                 >
                   <div className="w-[82px] h-[82px] rounded-full bg-[#e1f5f4] group-hover:bg-[#c9eeec] group-active:scale-95 text-[#009b96] flex items-center justify-center shadow-sm transition-all duration-200">
                     <img src={img204} alt="Crea" className="w-[42px] h-[42px] object-contain" />
@@ -806,7 +849,7 @@ export default function App() {
                 {/* 2. BUTTON: VISUALIZZA (Old Classic Structured List Style) */}
                 <button
                   onClick={() => setSubView('active')}
-                  className="flex flex-col items-center text-center focus:outline-none select-none group w-44 py-2 cursor-pointer border-none bg-transparent"
+                  className="flex flex-col items-center text-center focus:outline-none select-none group w-36 py-2 cursor-pointer border-none bg-transparent"
                 >
                   <div className="w-[82px] h-[82px] rounded-full bg-[#e3effb] group-hover:bg-[#ccdff7] group-active:scale-95 text-[#0066d6] flex items-center justify-center shadow-sm transition-all duration-200">
                     <ListCustomIcon className="w-9 h-9 text-black" />
@@ -822,7 +865,7 @@ export default function App() {
                 {/* 3. BUTTON: STORICO (Purple Style) */}
                 <button
                   onClick={() => setSubView('history')}
-                  className="flex flex-col items-center text-center focus:outline-none select-none group w-44 py-2 cursor-pointer border-none bg-transparent"
+                  className="flex flex-col items-center text-center focus:outline-none select-none group w-36 py-2 cursor-pointer border-none bg-transparent"
                 >
                   <div className="w-[82px] h-[82px] rounded-full bg-[#f0ebf8] group-hover:bg-[#e2d8f3] group-active:scale-95 text-[#633cb3] flex items-center justify-center shadow-sm transition-all duration-200">
                     <img src={img205} alt="Storico" className="w-9 h-9 object-contain" />
@@ -835,6 +878,65 @@ export default function App() {
                   </span>
                 </button>
 
+                {/* 4. BUTTON: TEAM (Orange Style) */}
+                <button
+                  onClick={() => setSubView('team')}
+                  className="flex flex-col items-center text-center focus:outline-none select-none group w-36 py-2 cursor-pointer border-none bg-transparent"
+                >
+                  <div className="w-[82px] h-[82px] rounded-full bg-[#fceee6] group-hover:bg-[#fae1d2] group-active:scale-95 text-[#e65c00] flex items-center justify-center shadow-sm transition-all duration-200">
+                    <Users size={32} className="text-[#e65c00]" />
+                  </div>
+                  <span className="text-[15px] font-semibold text-[#1a1a1a] mt-3 group-hover:text-[#e65c00] transition-colors">
+                    Team
+                  </span>
+                  <span className="text-[12px] text-[#737373] font-normal mt-0.5">
+                    {mockTeamMembers.length} membri
+                  </span>
+                </button>
+
+              </div>
+            )}
+
+            {subView === 'team' && (
+              /* ================= SUB-VIEW: TEAM DASHBOARD ================= */
+              <div className="w-full flex flex-col space-y-6 py-2 fade-in">
+                
+                <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+                  <button
+                    onClick={() => setSubView('hub')}
+                    className="flex items-center gap-2 text-neutral-500 hover:text-neutral-800 text-sm font-semibold transition"
+                  >
+                    <ArrowLeft size={16} />
+                    <span>Torna alla Hub</span>
+                  </button>
+                  <span className="text-xs font-bold text-[#e65c00] uppercase tracking-widest bg-[#fceee6] px-2.5 py-1 rounded-full">Team ({mockTeamMembers.length})</span>
+                </div>
+
+                <div className="w-full flex flex-col gap-4">
+                  {mockTeamMembers.map((member, idx) => (
+                    <div key={idx} className="bg-white border border-neutral-100 rounded-2xl p-4 ms-card-shadow flex flex-col gap-3 hover:border-neutral-200 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-full bg-[#fceee6] text-[#e65c00] font-bold text-sm flex items-center justify-center shrink-0 shadow-sm border border-[#fae1d2]">
+                          {member.avatar}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[16px] font-bold text-neutral-800 tracking-tight">{member.name}</span>
+                          <span className="text-[12px] font-medium text-neutral-500">{member.role}</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 pt-3 border-t border-neutral-100">
+                        <div className="flex flex-col items-center bg-neutral-50 rounded-xl p-2 border border-neutral-100">
+                          <span className="text-[10px] uppercase font-bold text-neutral-400 mb-0.5 tracking-wider">Aperti</span>
+                          <span className="text-[18px] font-black text-neutral-700">{member.open}</span>
+                        </div>
+                        <div className="flex flex-col items-center bg-[#f0f9f8] rounded-xl p-2 border border-[#e1f5f4]">
+                          <span className="text-[10px] uppercase font-bold text-[#009b96] mb-0.5 tracking-wider">Risolti</span>
+                          <span className="text-[18px] font-black text-[#00a49f]">{member.resolved}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -1022,7 +1124,7 @@ export default function App() {
                         <div className="flex gap-3 justify-end pt-5 border-t border-neutral-100">
                           <button
                             type="button"
-                            onClick={() => setSubView('create_select')}
+                            onClick={() => handleCancelForm('create_select')}
                             className="px-5 py-2.5 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-neutral-600 text-sm font-semibold transition cursor-pointer border-none bg-transparent"
                           >
                             Annulla
@@ -1096,13 +1198,22 @@ export default function App() {
                               />
                             </div>
 
-                            <button
-                              type="submit"
-                              className="w-full py-3 rounded-xl bg-[#0067b8] hover:bg-[#005da6] text-white text-sm font-semibold shadow-md transition flex items-center justify-center gap-2 cursor-pointer border-none"
-                            >
-                              <span>Invia Richiesta</span>
-                              <ArrowRight size={15} />
-                            </button>
+                            <div className="flex gap-3 pt-2">
+                              <button
+                                type="button"
+                                onClick={() => handleCancelForm('create_select')}
+                                className="w-1/3 py-3 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-neutral-600 text-sm font-semibold transition cursor-pointer border-none bg-transparent"
+                              >
+                                Annulla
+                              </button>
+                              <button
+                                type="submit"
+                                className="w-2/3 py-3 rounded-xl bg-[#0067b8] hover:bg-[#005da6] text-white text-sm font-semibold shadow-md transition flex items-center justify-center gap-2 cursor-pointer border-none"
+                              >
+                                <span>Rivedi Richiesta</span>
+                                <ArrowRight size={15} />
+                              </button>
+                            </div>
                           </form>
                         </div>
                       </div>
@@ -1217,6 +1328,79 @@ export default function App() {
                   </div>
                 )}
 
+              </div>
+            )}
+
+            {subView === 'create_review' && draftTicket && (
+              /* ================= SUB-VIEW: TICKET CREATION REVIEW ================= */
+              <div className="w-full flex flex-col space-y-6 py-2 fade-in">
+                
+                <div className="flex flex-col border-b border-neutral-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setSubView('create_form')}
+                      className="w-8 h-8 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer"
+                    >
+                      <ArrowLeft size={16} className="text-neutral-700" />
+                    </button>
+                    <div>
+                      <h2 className="text-[24px] font-light text-neutral-800 tracking-tight leading-tight">
+                        Conferma ticket
+                      </h2>
+                      <p className="text-sm text-neutral-500 mt-0.5">Nuovo documento</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-[#e1f5f4] p-4 rounded-xl flex items-start gap-3 border border-[#c9eeec]">
+                  <AlertTriangle size={18} className="text-[#009b96] mt-0.5 shrink-0" />
+                  <p className="text-[13px] text-neutral-700 font-medium">Verifica i dati del ticket prima di completare il salvataggio.</p>
+                </div>
+
+                <div className="bg-white border border-neutral-200 rounded-2xl p-5 ms-card-shadow space-y-6">
+                  <div className="border-b border-dashed border-neutral-200 pb-4">
+                    <div className="text-xs font-semibold text-neutral-400 mb-1">{draftTicket.id} • Bozza</div>
+                    <div className="text-[18px] font-bold text-neutral-800">{draftTicket.subject}</div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between border-b border-dashed border-neutral-100 pb-2">
+                      <span className="text-[13px] font-bold text-neutral-400 uppercase tracking-wider w-1/3">Stato</span>
+                      <span className="text-[14px] font-semibold text-neutral-800 w-2/3 text-right">Aperto</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-dashed border-neutral-100 pb-2">
+                      <span className="text-[13px] font-bold text-neutral-400 uppercase tracking-wider w-1/3">Categoria</span>
+                      <span className="text-[14px] font-semibold text-neutral-800 w-2/3 text-right">{draftTicket.category}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-dashed border-neutral-100 pb-2">
+                      <span className="text-[13px] font-bold text-neutral-400 uppercase tracking-wider w-1/3">Cliente</span>
+                      <span className="text-[14px] font-semibold text-neutral-800 w-2/3 text-right">{draftTicket.customer}</span>
+                    </div>
+                    <div className="flex flex-col border-b border-dashed border-neutral-100 pb-2 gap-1.5">
+                      <span className="text-[13px] font-bold text-neutral-400 uppercase tracking-wider">Descrizione</span>
+                      <span className="text-[14px] font-medium text-neutral-700 bg-neutral-50 p-3 rounded-xl border border-neutral-100">
+                        {draftTicket.desc}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => handleCancelForm('create_select')}
+                    className="w-1/3 py-3.5 rounded-xl border border-[#f3d6d8] bg-[#fdf3f4] text-[#a4262c] text-[15px] font-bold transition hover:bg-[#fae7e9] cursor-pointer text-center flex items-center justify-center gap-2"
+                  >
+                    <X size={18} />
+                    <span>Annulla</span>
+                  </button>
+                  <button
+                    onClick={handleConfirmTicket}
+                    className="w-2/3 py-3.5 rounded-xl bg-[#009b96] hover:bg-[#008f8a] text-white text-[15px] font-bold shadow-md transition cursor-pointer text-center flex items-center justify-center gap-2 border-none"
+                  >
+                    <Check size={18} />
+                    <span>Conferma e Salva</span>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1739,6 +1923,37 @@ export default function App() {
 
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelWarning && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl ms-card-shadow border border-neutral-100" onClick={e => e.stopPropagation()}>
+            <div className="p-6 text-center space-y-4">
+              <div className="w-16 h-16 bg-[#fdf3f4] rounded-full flex items-center justify-center mx-auto mb-2 border border-[#f3d6d8]">
+                <AlertTriangle size={32} className="text-[#a4262c]" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-800 tracking-tight">Annullare la creazione?</h3>
+              <p className="text-sm text-neutral-500 font-medium">
+                Tutti i dati inseriti e i progressi andranno persi. Sei sicuro di voler procedere?
+              </p>
+            </div>
+            <div className="flex border-t border-neutral-100">
+              <button
+                onClick={abortCancel}
+                className="w-1/2 py-4 text-[15px] font-bold text-neutral-600 hover:bg-neutral-50 transition border-r border-neutral-100 cursor-pointer border-none bg-transparent"
+              >
+                Indietro
+              </button>
+              <button
+                onClick={executeCancel}
+                className="w-1/2 py-4 text-[15px] font-bold text-[#a4262c] hover:bg-[#fdf3f4] transition cursor-pointer border-none bg-transparent"
+              >
+                Conferma
+              </button>
+            </div>
           </div>
         </div>
       )}
