@@ -290,6 +290,42 @@ export default function App() {
     }
   ]);
 
+  const [notifications, setNotifications] = useState([
+    {
+      id: 'N-001',
+      ticketId: 'KT-1004',
+      title: 'Nuovo commento sul ticket KT-1004',
+      desc: 'Laura Conti ha aggiunto: "Ho verificato lo stato..."',
+      date: '08/07/2026 14:24',
+      read: false
+    },
+    {
+      id: 'N-002',
+      ticketId: 'KT-1005',
+      title: 'Ticket assegnato',
+      desc: 'Il ticket KT-1005 OAuth Consent Token Cycle è stato assegnato a te.',
+      date: '09/07/2026 09:13',
+      read: false
+    },
+    {
+      id: 'N-003',
+      ticketId: 'KT-1007',
+      title: 'Sollecito ricevuto',
+      desc: 'Il cliente ha sollecitato il ticket KT-1007 Inventory Sync Delay.',
+      date: '09/07/2026 12:45',
+      read: true
+    }
+  ]);
+
+  const handleOpenNotificationTicket = (ticketId) => {
+    const ticket = activeTickets.find(t => t.id === ticketId) || historyTickets.find(t => t.id === ticketId);
+    if (ticket) {
+      handleOpenTicketDetails(ticket, 'notifications');
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
@@ -625,11 +661,13 @@ export default function App() {
 
             <div className="flex items-center gap-3" ref={profileRef}>
               <button
-                onClick={() => triggerNotification('Nessun nuovo avviso presente.')}
+                onClick={() => setSubView('notifications')}
                 className="relative p-1.5 hover:bg-neutral-800 rounded-full transition duration-150 text-neutral-300 hover:text-white"
               >
                 <Bell size={18} />
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#e81123] rounded-full"></span>
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#e81123] rounded-full"></span>
+                )}
               </button>
 
               <div className="relative">
@@ -662,6 +700,72 @@ export default function App() {
 
           {/* Main workspace frame container */}
           <main className="flex-grow flex flex-col items-center justify-start overflow-y-auto w-full max-w-md mx-auto px-5 py-6">
+
+            {subView === 'notifications' && (
+              /* ================= SUB-VIEW: NOTIFICATIONS ================= */
+              <div className="w-full flex flex-col items-center justify-start pb-10 fade-in">
+                {/* Header */}
+                <div className="w-full flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setSubView('hub')}
+                      className="p-1 hover:bg-neutral-100 rounded-full transition-colors text-neutral-500"
+                    >
+                      <ArrowLeft size={20} />
+                    </button>
+                    <h2 className="text-[20px] font-semibold text-[#1a1a1a] tracking-tight">Notifiche</h2>
+                  </div>
+                  {unreadCount > 0 && (
+                    <button 
+                      onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
+                      className="text-[12px] font-medium text-[#009b96] hover:underline"
+                    >
+                      Segna tutte come lette
+                    </button>
+                  )}
+                </div>
+
+                {/* Notifications List */}
+                <div className="w-full flex flex-col gap-3">
+                  {notifications.length === 0 ? (
+                    <div className="w-full py-12 flex flex-col items-center justify-center text-neutral-400">
+                      <Bell size={32} className="mb-3 text-neutral-300" />
+                      <span className="text-[14px]">Nessuna notifica presente.</span>
+                    </div>
+                  ) : (
+                    notifications.map((notif) => (
+                      <div
+                        key={notif.id}
+                        onClick={() => {
+                          if (!notif.read) {
+                            setNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                          }
+                          handleOpenNotificationTicket(notif.ticketId);
+                        }}
+                        className={`w-full flex flex-col p-4 rounded-xl border ms-card-shadow cursor-pointer transition-all duration-200 
+                          ${notif.read ? 'bg-white border-neutral-200 hover:border-neutral-300' : 'bg-[#f0f9f8] border-[#009b96] hover:bg-[#e1f5f4]'}`}
+                      >
+                        <div className="flex justify-between items-start mb-1.5 gap-2">
+                          <span className={`text-[15px] font-semibold leading-tight ${notif.read ? 'text-[#1a1a1a]' : 'text-[#007a75]'}`}>
+                            {notif.title}
+                          </span>
+                          <span className="text-[11px] text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                            {notif.date}
+                          </span>
+                        </div>
+                        <span className="text-[13px] text-neutral-600 mb-2.5 leading-tight">
+                          {notif.desc}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#009b96]">
+                          <TicketLogoIcon className="w-3.5 h-3.5" />
+                          <span>Ticket: {notif.ticketId}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
 
             {subView === 'hub' && (
               /* ================= SUB-VIEW: 3-ACTION HORIZONTAL/VERTICAL HUB ================= */
