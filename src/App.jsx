@@ -326,6 +326,18 @@ export default function App() {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState('Tutte');
+  const [activeSearchQuery, setActiveSearchQuery] = useState('');
+
+  const filteredActiveTickets = activeTickets.filter(ticket => {
+    const matchesCategory = activeCategoryFilter === 'Tutte' || ticket.category === activeCategoryFilter;
+    const matchesSearch = activeSearchQuery === '' || 
+      ticket.subject.toLowerCase().includes(activeSearchQuery.toLowerCase()) || 
+      ticket.customer.toLowerCase().includes(activeSearchQuery.toLowerCase()) || 
+      ticket.id.toLowerCase().includes(activeSearchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
@@ -652,7 +664,10 @@ export default function App() {
           {/* Top Header Bar formatted like Microsoft Business Central */}
           <header className="w-full h-14 bg-[#1e1e1e] border-b border-[#2d2d2d] px-4 flex justify-between items-center z-50 shadow-sm shrink-0">
 
-            <div className="flex items-center gap-2.5">
+            <div 
+              className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setSubView('hub')}
+            >
               <img src={logoImg} alt="Key-Ticket Logo" className="w-7 h-7 object-contain" style={{ filter: 'url(#remove-white)' }} />
               <span className="text-[14px] font-semibold text-white tracking-wide">
                 Key-Ticket
@@ -1213,18 +1228,62 @@ export default function App() {
                     <ArrowLeft size={16} />
                     <span>Torna alla Hub</span>
                   </button>
-                  <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Aperte ({activeTickets.length})</span>
+                  <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Aperte ({filteredActiveTickets.length})</span>
                 </div>
 
-                {activeTickets.length === 0 ? (
-                  <div className="bg-white border border-neutral-200 p-8 rounded-2xl text-center ms-card-shadow space-y-3">
+                {/* Filters & Search */}
+                <div className="space-y-4 w-full">
+                  {/* Search Bar */}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <Search size={16} className="text-neutral-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Cerca ticket, cliente o ID..."
+                      value={activeSearchQuery}
+                      onChange={(e) => setActiveSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2.5 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#009b96]/20 focus:border-[#009b96] transition-all ms-card-shadow text-neutral-700"
+                    />
+                    {activeSearchQuery && (
+                      <button 
+                        onClick={() => setActiveSearchQuery('')}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-neutral-400 hover:text-neutral-600"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Horizontal Category Scroll */}
+                  <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide -mx-2 px-2">
+                    <button 
+                      onClick={() => setActiveCategoryFilter('Tutte')}
+                      className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${activeCategoryFilter === 'Tutte' ? 'bg-[#009b96] text-white border-[#009b96] shadow-md shadow-[#009b96]/20' : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'}`}
+                    >
+                      Tutte
+                    </button>
+                    {CATEGORIES.map(cat => (
+                      <button 
+                        key={cat.name}
+                        onClick={() => setActiveCategoryFilter(cat.name)}
+                        className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${activeCategoryFilter === cat.name ? 'bg-[#009b96] text-white border-[#009b96] shadow-md shadow-[#009b96]/20' : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'}`}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {filteredActiveTickets.length === 0 ? (
+                  <div className="bg-white border border-neutral-200 p-8 rounded-2xl text-center ms-card-shadow space-y-3 mt-4">
                     <CheckCircle className="text-[#009b96] mx-auto w-12 h-12" />
-                    <p className="font-bold text-neutral-700">Tutto risolto!</p>
-                    <p className="text-xs text-neutral-400">Non ci sono ticket attivi in sospeso.</p>
+                    <p className="font-bold text-neutral-700">{activeTickets.length === 0 ? 'Tutto risolto!' : 'Nessun ticket trovato.'}</p>
+                    <p className="text-xs text-neutral-400">{activeTickets.length === 0 ? 'Non ci sono ticket attivi in sospeso.' : 'Modifica la ricerca o il filtro per vedere altri ticket.'}</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {activeTickets.map((ticket) => (
+                  <div className="space-y-4 mt-4">
+                    {filteredActiveTickets.map((ticket) => (
                       <div
                         key={ticket.id}
                         onClick={() => handleOpenTicketDetails(ticket, 'active')}
