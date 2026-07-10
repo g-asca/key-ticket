@@ -830,18 +830,18 @@ export default function App() {
             )}
 
             {subView === 'hub' && (
-              /* ================= SUB-VIEW: 4-ACTION GRID HUB ================= */
-              <div className="w-full grid grid-cols-2 gap-y-12 gap-x-4 py-10 fade-in justify-items-center">
+              /* ================= SUB-VIEW: 3-ACTION CENTERED HUB ================= */
+              <div className="w-full flex flex-col items-center justify-center space-y-12 py-8 fade-in text-center">
 
                 {/* 1. BUTTON: CREA (Teal Style) */}
                 <button
                   onClick={() => setSubView('create_select')}
-                  className="flex flex-col items-center text-center focus:outline-none select-none group w-36 py-2 cursor-pointer border-none bg-transparent"
+                  className="flex flex-col items-center text-center focus:outline-none select-none group w-48 py-2 cursor-pointer border-none bg-transparent"
                 >
-                  <div className="w-[82px] h-[82px] rounded-full bg-[#e1f5f4] group-hover:bg-[#c9eeec] group-active:scale-95 text-[#009b96] flex items-center justify-center shadow-sm transition-all duration-200">
-                    <img src={img204} alt="Crea" className="w-[42px] h-[42px] object-contain" />
+                  <div className="w-[100px] h-[100px] rounded-full bg-[#e1f5f4] group-hover:bg-[#c9eeec] group-active:scale-95 text-[#009b96] flex items-center justify-center shadow-sm transition-all duration-200">
+                    <img src={img204} alt="Crea" className="w-[52px] h-[52px] object-contain" />
                   </div>
-                  <span className="text-[15px] font-semibold text-[#1a1a1a] mt-3 group-hover:text-[#009b96] transition-colors">
+                  <span className="text-[17px] font-semibold text-[#1a1a1a] mt-4 group-hover:text-[#009b96] transition-colors">
                     Crea
                   </span>
                 </button>
@@ -849,15 +849,15 @@ export default function App() {
                 {/* 2. BUTTON: VISUALIZZA (Old Classic Structured List Style) */}
                 <button
                   onClick={() => setSubView('active')}
-                  className="flex flex-col items-center text-center focus:outline-none select-none group w-36 py-2 cursor-pointer border-none bg-transparent"
+                  className="flex flex-col items-center text-center focus:outline-none select-none group w-48 py-2 cursor-pointer border-none bg-transparent"
                 >
-                  <div className="w-[82px] h-[82px] rounded-full bg-[#e3effb] group-hover:bg-[#ccdff7] group-active:scale-95 text-[#0066d6] flex items-center justify-center shadow-sm transition-all duration-200">
-                    <ListCustomIcon className="w-9 h-9 text-black" />
+                  <div className="w-[100px] h-[100px] rounded-full bg-[#e3effb] group-hover:bg-[#ccdff7] group-active:scale-95 text-[#0066d6] flex items-center justify-center shadow-sm transition-all duration-200">
+                    <ListCustomIcon className="w-11 h-11 text-black" />
                   </div>
-                  <span className="text-[15px] font-semibold text-[#1a1a1a] mt-3 group-hover:text-[#0066d6] transition-colors">
+                  <span className="text-[17px] font-semibold text-[#1a1a1a] mt-4 group-hover:text-[#0066d6] transition-colors">
                     Visualizza
                   </span>
-                  <span className="text-[12px] text-[#737373] font-normal mt-0.5">
+                  <span className="text-[13px] text-[#737373] font-normal mt-1">
                     {activeTickets.length} aperte
                   </span>
                 </button>
@@ -865,32 +865,16 @@ export default function App() {
                 {/* 3. BUTTON: STORICO (Purple Style) */}
                 <button
                   onClick={() => setSubView('history')}
-                  className="flex flex-col items-center text-center focus:outline-none select-none group w-36 py-2 cursor-pointer border-none bg-transparent"
+                  className="flex flex-col items-center text-center focus:outline-none select-none group w-48 py-2 cursor-pointer border-none bg-transparent"
                 >
-                  <div className="w-[82px] h-[82px] rounded-full bg-[#f0ebf8] group-hover:bg-[#e2d8f3] group-active:scale-95 text-[#633cb3] flex items-center justify-center shadow-sm transition-all duration-200">
-                    <img src={img205} alt="Storico" className="w-9 h-9 object-contain" />
+                  <div className="w-[100px] h-[100px] rounded-full bg-[#f0ebf8] group-hover:bg-[#e2d8f3] group-active:scale-95 text-[#633cb3] flex items-center justify-center shadow-sm transition-all duration-200">
+                    <img src={img205} alt="Storico" className="w-11 h-11 object-contain" />
                   </div>
-                  <span className="text-[15px] font-semibold text-[#1a1a1a] mt-3 group-hover:text-[#633cb3] transition-colors">
+                  <span className="text-[17px] font-semibold text-[#1a1a1a] mt-4 group-hover:text-[#633cb3] transition-colors">
                     Storico
                   </span>
-                  <span className="text-[12px] text-[#737373] font-normal mt-0.5">
+                  <span className="text-[13px] text-[#737373] font-normal mt-1">
                     {historyTickets.length} chiuse
-                  </span>
-                </button>
-
-                {/* 4. BUTTON: TEAM (Orange Style) */}
-                <button
-                  onClick={() => setSubView('team')}
-                  className="flex flex-col items-center text-center focus:outline-none select-none group w-36 py-2 cursor-pointer border-none bg-transparent"
-                >
-                  <div className="w-[82px] h-[82px] rounded-full bg-[#fceee6] group-hover:bg-[#fae1d2] group-active:scale-95 text-[#e65c00] flex items-center justify-center shadow-sm transition-all duration-200">
-                    <Users size={32} className="text-[#e65c00]" />
-                  </div>
-                  <span className="text-[15px] font-semibold text-[#1a1a1a] mt-3 group-hover:text-[#e65c00] transition-colors">
-                    Team
-                  </span>
-                  <span className="text-[12px] text-[#737373] font-normal mt-0.5">
-                    {mockTeamMembers.length} membri
                   </span>
                 </button>
 
