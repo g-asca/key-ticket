@@ -885,15 +885,20 @@ export default function App() {
               /* ================= SUB-VIEW: TEAM DASHBOARD ================= */
               <div className="w-full flex flex-col space-y-6 py-2 fade-in">
                 
-                <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
-                  <button
-                    onClick={() => setSubView('hub')}
-                    className="flex items-center gap-2 text-neutral-500 hover:text-neutral-800 text-sm font-semibold transition"
-                  >
-                    <ArrowLeft size={16} />
-                    <span>Torna alla Hub</span>
-                  </button>
-                  <span className="text-xs font-bold text-[#e65c00] uppercase tracking-widest bg-[#fceee6] px-2.5 py-1 rounded-full">Team ({mockTeamMembers.length})</span>
+                <button
+                  onClick={() => setSubView('hub')}
+                  className="w-10 h-10 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer border-none"
+                >
+                  <ArrowLeft size={18} className="text-neutral-700" />
+                </button>
+
+                <div className="space-y-1 pb-2">
+                  <h2 className="text-[28px] font-light text-neutral-800 tracking-tight leading-tight">
+                    Team di Supporto
+                  </h2>
+                  <p className="text-[14px] text-neutral-400 font-normal">
+                    {mockTeamMembers.length} membri attivi
+                  </p>
                 </div>
 
                 <div className="w-full flex flex-col gap-4">
@@ -983,14 +988,14 @@ export default function App() {
 
                 <div className="w-full space-y-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-[26px] font-light text-neutral-800 tracking-tight leading-tight">
+                    <h2 className="text-[28px] font-light text-neutral-800 tracking-tight leading-tight">
                       Nuova richiesta
                     </h2>
                     <span className="text-neutral-400 cursor-pointer hover:text-neutral-600 transition" title={selectedCategory}>
                       <Info size={16} />
                     </span>
                   </div>
-                  <p className="text-[13px] text-neutral-500 font-semibold uppercase tracking-wider">
+                  <p className="text-[14px] text-neutral-400 font-normal">
                     {selectedCategory}
                   </p>
                 </div>
@@ -1319,21 +1324,20 @@ export default function App() {
               /* ================= SUB-VIEW: TICKET CREATION REVIEW ================= */
               <div className="w-full flex flex-col space-y-6 py-2 fade-in">
                 
-                <div className="flex flex-col border-b border-neutral-100 pb-4">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setSubView('create_form')}
-                      className="w-8 h-8 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer"
-                    >
-                      <ArrowLeft size={16} className="text-neutral-700" />
-                    </button>
-                    <div>
-                      <h2 className="text-[24px] font-light text-neutral-800 tracking-tight leading-tight">
-                        Conferma ticket
-                      </h2>
-                      <p className="text-sm text-neutral-500 mt-0.5">Nuovo documento</p>
-                    </div>
-                  </div>
+                <button
+                  onClick={() => setSubView('create_form')}
+                  className="w-10 h-10 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer border-none"
+                >
+                  <ArrowLeft size={18} className="text-neutral-700" />
+                </button>
+
+                <div className="space-y-1 pb-2">
+                  <h2 className="text-[28px] font-light text-neutral-800 tracking-tight leading-tight">
+                    Conferma ticket
+                  </h2>
+                  <p className="text-[14px] text-neutral-400 font-normal">
+                    Nuovo documento
+                  </p>
                 </div>
 
                 <div className="bg-[#e1f5f4] p-4 rounded-xl flex items-start gap-3 border border-[#c9eeec]">
@@ -1392,15 +1396,20 @@ export default function App() {
               /* ================= SUB-VIEW: ACTIVE REQUESTS LIST ================= */
               <div className="w-full space-y-5 py-2 fade-in">
 
-                <div className="flex items-center justify-between pb-2">
-                  <button
-                    onClick={() => setSubView('hub')}
-                    className="flex items-center gap-2 text-neutral-500 hover:text-neutral-800 text-sm font-semibold transition"
-                  >
-                    <ArrowLeft size={16} />
-                    <span>Torna alla Hub</span>
-                  </button>
-                  <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Aperte ({filteredActiveTickets.length})</span>
+                <button
+                  onClick={() => setSubView('hub')}
+                  className="w-10 h-10 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer border-none"
+                >
+                  <ArrowLeft size={18} className="text-neutral-700" />
+                </button>
+
+                <div className="space-y-1 pb-2">
+                  <h2 className="text-[28px] font-light text-neutral-800 tracking-tight leading-tight">
+                    Richieste Aperte
+                  </h2>
+                  <p className="text-[14px] text-neutral-400 font-normal">
+                    {filteredActiveTickets.length} ticket in coda
+                  </p>
                 </div>
 
                 {/* Filters & Search */}
@@ -1497,15 +1506,20 @@ export default function App() {
               /* ================= SUB-VIEW: REQUESTS ARCHIVE HISTORY ================= */
               <div className="w-full space-y-5 py-2 fade-in">
 
-                <div className="flex items-center justify-between pb-2">
-                  <button
-                    onClick={() => setSubView('hub')}
-                    className="flex items-center gap-2 text-neutral-500 hover:text-neutral-800 text-sm font-semibold transition"
-                  >
-                    <ArrowLeft size={16} />
-                    <span>Torna alla Hub</span>
-                  </button>
-                  <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Storico ({historyTickets.length})</span>
+                <button
+                  onClick={() => setSubView('hub')}
+                  className="w-10 h-10 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer border-none"
+                >
+                  <ArrowLeft size={18} className="text-neutral-700" />
+                </button>
+
+                <div className="space-y-1 pb-2">
+                  <h2 className="text-[28px] font-light text-neutral-800 tracking-tight leading-tight">
+                    Storico Ticket
+                  </h2>
+                  <p className="text-[14px] text-neutral-400 font-normal">
+                    {historyTickets.length} ticket chiusi
+                  </p>
                 </div>
 
                 {historyTickets.length === 0 ? (
