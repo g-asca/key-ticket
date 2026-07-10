@@ -1282,52 +1282,40 @@ export default function App() {
                     <p className="text-xs text-neutral-400">{activeTickets.length === 0 ? 'Non ci sono ticket attivi in sospeso.' : 'Modifica la ricerca o il filtro per vedere altri ticket.'}</p>
                   </div>
                 ) : (
-                  <div className="space-y-4 mt-4">
-                    {filteredActiveTickets.map((ticket) => (
-                      <div
-                        key={ticket.id}
-                        onClick={() => handleOpenTicketDetails(ticket, 'active')}
-                        className="bg-white border border-neutral-200 p-4 rounded-2xl ms-card-shadow space-y-3 hover:border-neutral-300 transition cursor-pointer"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="space-y-1">
-                            <span className="text-[10px] font-bold text-[#0078d4] tracking-wider uppercase bg-blue-50 px-2 py-0.5 rounded-md">
-                              {ticket.id}
+                  <div className="bg-white border border-neutral-100 rounded-2xl ms-card-shadow overflow-hidden mt-4">
+                    {filteredActiveTickets.map((ticket, index) => {
+                      const catObj = CATEGORIES.find(c => c.name === ticket.category);
+                      const catColor = catObj ? catObj.color : '#00a49f';
+                      return (
+                        <div
+                          key={ticket.id}
+                          onClick={() => handleOpenTicketDetails(ticket, 'active')}
+                          className={`w-full p-4 flex items-center justify-between cursor-pointer hover:bg-neutral-50 transition-colors ${index !== filteredActiveTickets.length - 1 ? 'border-b border-neutral-100' : ''}`}
+                        >
+                          <div className="flex flex-col space-y-1">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2.5 h-2.5 rounded-[3px]" style={{ backgroundColor: catColor }}></div>
+                              <span className="text-[14px] font-semibold text-neutral-800 tracking-tight">
+                                {ticket.category}
+                              </span>
+                            </div>
+                            <span className="text-[13px] text-neutral-500 ml-4.5 line-clamp-1">
+                              {ticket.customer}
                             </span>
-                            <span className="ml-2 text-[10px] font-bold text-neutral-400 tracking-wider">
-                              {ticket.category}
+                            <span className="text-[11px] text-neutral-400 ml-4.5">
+                              {ticket.creationDate ? ticket.creationDate.split(' ')[0] : ticket.date}
                             </span>
-                            <h4 className="font-bold text-neutral-850 text-base mt-1.5">{ticket.subject}</h4>
-                            <p className="text-xs text-neutral-500 font-semibold mt-0.5">{ticket.customer}</p>
                           </div>
-
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ticket.urgency === 'High'
-                            ? 'bg-red-50 text-red-700 border border-red-100'
-                            : ticket.urgency === 'Medium'
-                              ? 'bg-amber-50 text-amber-700 border border-amber-100'
-                              : 'bg-green-50 text-green-700 border border-green-100'
-                            }`}>
-                            {ticket.urgency === 'High' ? 'Alta' : ticket.urgency === 'Medium' ? 'Media' : 'Bassa'}
-                          </span>
+                          
+                          <div className="flex items-center gap-3">
+                            <span className="text-[11px] font-semibold text-[#00a49f] bg-[#e1f5f4] px-2.5 py-1 rounded-full uppercase tracking-wider">
+                              Aperto
+                            </span>
+                            <ArrowRight size={16} className="text-neutral-400" />
+                          </div>
                         </div>
-
-                        {ticket.desc && (
-                          <p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed bg-neutral-50 p-2.5 rounded-lg border border-neutral-100">
-                            {ticket.desc}
-                          </p>
-                        )}
-
-                        <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
-                          <span className="text-[10px] text-neutral-400 font-medium flex items-center gap-1">
-                            <Clock size={11} /> Creato il {ticket.creationDate || ticket.date}
-                          </span>
-
-                          <span className="text-xs text-[#00a49f] font-semibold flex items-center gap-1 hover:underline">
-                            Dettagli <ChevronRight size={13} />
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -1353,41 +1341,41 @@ export default function App() {
                     <p className="text-sm text-neutral-400">Nessun ticket archiviato presente nello storico.</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {historyTickets.map((ticket) => (
-                      <div
-                        key={ticket.id}
-                        onClick={() => handleOpenTicketDetails(ticket, 'history')}
-                        className="bg-white border border-neutral-200 p-4 rounded-2xl ms-card-shadow space-y-2.5 hover:border-neutral-300 transition cursor-pointer"
-                      >
-
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <span className="text-[10px] font-bold text-neutral-400 tracking-wider">
-                              {ticket.id} • {ticket.creationDate || ticket.date} • {ticket.category}
+                  <div className="bg-white border border-neutral-100 rounded-2xl ms-card-shadow overflow-hidden mt-4">
+                    {historyTickets.map((ticket, index) => {
+                      const catObj = CATEGORIES.find(c => c.name === ticket.category);
+                      const catColor = catObj ? catObj.color : '#00a49f';
+                      const isResolved = ticket.status === 'Resolved';
+                      return (
+                        <div
+                          key={ticket.id}
+                          onClick={() => handleOpenTicketDetails(ticket, 'history')}
+                          className={`w-full p-4 flex items-center justify-between cursor-pointer hover:bg-neutral-50 transition-colors ${index !== historyTickets.length - 1 ? 'border-b border-neutral-100' : ''}`}
+                        >
+                          <div className="flex flex-col space-y-1">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2.5 h-2.5 rounded-[3px]" style={{ backgroundColor: catColor }}></div>
+                              <span className="text-[14px] font-semibold text-neutral-800 tracking-tight">
+                                {ticket.category}
+                              </span>
+                            </div>
+                            <span className="text-[13px] text-neutral-500 ml-4.5 line-clamp-1">
+                              {ticket.customer}
                             </span>
-                            <h4 className="font-bold text-neutral-850 text-sm mt-0.5">{ticket.subject}</h4>
-                            <p className="text-xs text-neutral-500 mt-0.5">{ticket.customer}</p>
+                            <span className="text-[11px] text-neutral-400 ml-4.5">
+                              {ticket.creationDate ? ticket.creationDate.split(' ')[0] : ticket.date}
+                            </span>
                           </div>
-
-                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 ${ticket.status === 'Resolved'
-                            ? 'bg-green-50 text-green-700 border border-green-100'
-                            : 'bg-red-50 text-red-700 border border-red-100'
-                            }`}>
-                            <CheckCircle size={10} />
-                            <span>{ticket.status === 'Resolved' ? 'Risolto' : 'Rifiutato'}</span>
-                          </span>
+                          
+                          <div className="flex items-center gap-3">
+                            <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${isResolved ? 'text-green-700 bg-green-50 border border-green-100' : 'text-red-700 bg-red-50 border border-red-100'}`}>
+                              {isResolved ? 'Risolto' : 'Chiuso'}
+                            </span>
+                            <ArrowRight size={16} className="text-neutral-400" />
+                          </div>
                         </div>
-
-                        <div className="bg-neutral-50 p-2.5 rounded-lg border border-neutral-100 space-y-1">
-                          <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider">Nota di Chiusura</span>
-                          <p className="text-xs text-neutral-500 leading-relaxed italic">
-                            "{ticket.resolution}"
-                          </p>
-                        </div>
-
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
