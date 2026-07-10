@@ -757,11 +757,15 @@ export default function App() {
                           }
                           handleOpenNotificationTicket(notif.ticketId);
                         }}
-                        className={`w-full flex flex-col p-4 rounded-xl border ms-card-shadow cursor-pointer transition-all duration-200 
-                          ${notif.read ? 'bg-white border-neutral-200 hover:border-neutral-300' : 'bg-[#f0f9f8] border-[#009b96] hover:bg-[#e1f5f4]'}`}
+                        className="relative w-full flex flex-col p-4 rounded-xl bg-white border border-neutral-200 ms-card-shadow cursor-pointer hover:border-neutral-300 transition-all duration-200"
                       >
                         <div className="flex justify-between items-start mb-1.5 gap-2">
-                          <span className={`text-[15px] font-semibold leading-tight ${notif.read ? 'text-[#1a1a1a]' : 'text-[#007a75]'}`}>
+                          <span className="text-[15px] font-semibold text-[#1a1a1a] leading-tight flex items-center gap-2">
+                            {!notif.read && (
+                              <div className="w-4 h-4 rounded-full bg-[#e81123] text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                                !
+                              </div>
+                            )}
                             {notif.title}
                           </span>
                           <span className="text-[11px] text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
