@@ -19,12 +19,33 @@ import {
   User,
   Tag as TagIcon,
   Check,
-  UserCheck
+  UserCheck,
+  Trash2,
+  UploadCloud,
+  Paperclip
 } from 'lucide-react';
 
 import logoImg from './assets/media__1783603526191.png';
 import img204 from './assets/media__1783603526204.png';
 import img205 from './assets/media__1783603526205.png';
+
+const CATEGORIES = [
+  { name: 'Sposta Data', color: '#00a49f', info: 'Modifica la data di consegna o scadenza associata a cliente e articolo.' },
+  { name: 'Non Conformità', color: '#d83b01', info: 'Segnala una non conformità di prodotto, documenti o consegna.' },
+  { name: 'Sollecito', color: '#ffb900', info: 'Invia un sollecito per attività o documenti in attesa.' },
+  { name: 'Giacenza Articolo', color: '#0078d4', info: 'Verifica la disponibilità e giacenza di un articolo.' },
+  { name: 'Reso Merce', color: '#5c2d91', info: 'Gestisci un reso merce con motivazione e dati logistici.' },
+  { name: 'Variazione Prezzo', color: '#8764b8', info: 'Proponi o richiedi una variazione di prezzo.' },
+  { name: 'Blocco Ordine', color: '#a80000', info: 'Richiedi il blocco amministrativo o operativo di un ordine.' },
+  { name: 'Sblocco Ordine', color: '#107c41', info: 'Richiedi lo sblocco di un ordine sospeso.' },
+  { name: 'Verifica Pagamento', color: '#0078d4', info: 'Verifica lo stato contabile o l\'avvenuto pagamento.' },
+  { name: 'Aggiornamento Anagrafica', color: '#002050', info: 'Aggiorna i dettagli di anagrafica clienti o contatti.' },
+  { name: 'Richiesta Fattura', color: '#7f7f7f', info: 'Richiedi emissione, rettifica o copia di una fattura.' },
+  { name: 'Reclamo Trasporto', color: '#7a24db', info: 'Segnala problemi o anomalie legate alla spedizione.' },
+  { name: 'Priorità Consegna', color: '#d83b01', info: 'Richiedi la priorità o sollecito di una consegna.' },
+  { name: 'Richiesta Documenti', color: '#008272', info: 'Richiedi certificati, schede tecniche o altri documenti.' },
+  { name: 'Cambio Vettore', color: '#8a8a8a', info: 'Richiedi il cambio del vettore incaricato del trasporto.' }
+];
 
 const AzureStyleOverride = () => (
   <style dangerouslySetInnerHTML={{
@@ -124,6 +145,12 @@ export default function App() {
   const [formDesc, setFormDesc] = useState('');
   const [formUrgency, setFormUrgency] = useState('Medium');
   const [notification, setNotification] = useState('');
+
+  // Form tabbed functionality (Details, Note, Allegati)
+  const [formTab, setFormTab] = useState('details'); // 'details' | 'notes' | 'attachments'
+  const [formNotes, setFormNotes] = useState([]);
+  const [newFormNoteText, setNewFormNoteText] = useState('');
+  const [formAttachments, setFormAttachments] = useState([]);
 
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [newCommentText, setNewCommentText] = useState('');
@@ -325,6 +352,15 @@ export default function App() {
     setSubView('hub');
   };
 
+  const handleSelectCategory = (categoryName) => {
+    setSelectedCategory(categoryName);
+    setFormTab('details');
+    setFormNotes([]);
+    setNewFormNoteText('');
+    setFormAttachments([]);
+    setSubView('create_form');
+  };
+
   const handleCreateRequest = (e) => {
     if (e) e.preventDefault();
 
@@ -357,9 +393,24 @@ export default function App() {
       desc: selectedCategory === 'Sposta Data'
         ? `Spostamento richiesto da ${oldDate} a ${newDate} per l'articolo ${selectedItem.desc}`
         : formDesc || 'Nessun dettaglio aggiuntivo.',
-      tags: selectedCategory === 'Sposta Data' ? ['sposta-data', 'logistica'] : ['generale'],
-      assignee: 'Nessun assegnatario'
+      tags: selectedCategory === 'Sposta Data' ? ['sposta-data', 'logistica'] : [selectedCategory.toLowerCase().replace(/\s+/g, '-')],
+      assignee: 'Nessun assegnatario',
+      attachmentsCount: formAttachments.length,
+      attachmentsList: formAttachments
     };
+
+    // Save notes to comments state
+    if (formNotes.length > 0) {
+      const newComments = formNotes.map(note => ({
+        author: 'Key-Ticket Agent',
+        text: note,
+        date: currentFormattedTime
+      }));
+      setTicketComments(prev => ({
+        ...prev,
+        [nextId]: newComments
+      }));
+    }
 
     setActiveTickets([newRequest, ...activeTickets]);
     triggerNotification(`Richiesta ${nextId} (${selectedCategory}) salvata correttamente!`);
@@ -371,6 +422,8 @@ export default function App() {
     setNewDate('');
     setFormSubject('');
     setFormDesc('');
+    setFormNotes([]);
+    setFormAttachments([]);
 
     setSubView('hub');
   };
@@ -612,52 +665,52 @@ export default function App() {
 
             {subView === 'hub' && (
               /* ================= SUB-VIEW: 3-ACTION HORIZONTAL/VERTICAL HUB ================= */
-              <div className="w-full flex flex-col items-center justify-center space-y-12 py-10 fade-in">
+              <div className="w-full flex flex-col items-center justify-center space-y-12 py-10 fade-in text-center">
 
                 {/* 1. BUTTON: CREA (Teal Style) */}
-                <div className="flex flex-col items-center text-center">
-                  <button
-                    onClick={() => setSubView('create_select')}
-                    className="w-[82px] h-[82px] rounded-full bg-[#e1f5f4] hover:bg-[#c9eeec] active:scale-95 text-[#009b96] flex items-center justify-center shadow-sm cursor-pointer transition-all duration-200"
-                  >
+                <button
+                  onClick={() => setSubView('create_select')}
+                  className="flex flex-col items-center text-center focus:outline-none select-none group w-44 py-2 cursor-pointer border-none bg-transparent"
+                >
+                  <div className="w-[82px] h-[82px] rounded-full bg-[#e1f5f4] group-hover:bg-[#c9eeec] group-active:scale-95 text-[#009b96] flex items-center justify-center shadow-sm transition-all duration-200">
                     <img src={img204} alt="Crea" className="w-[42px] h-[42px] object-contain" />
-                  </button>
-                  <span className="text-[15px] font-semibold text-[#1a1a1a] mt-3">
+                  </div>
+                  <span className="text-[15px] font-semibold text-[#1a1a1a] mt-3 group-hover:text-[#009b96] transition-colors">
                     Crea
                   </span>
-                </div>
+                </button>
 
                 {/* 2. BUTTON: VISUALIZZA (Old Classic Structured List Style) */}
-                <div className="flex flex-col items-center text-center">
-                  <button
-                    onClick={() => setSubView('active')}
-                    className="w-[82px] h-[82px] rounded-full bg-[#e3effb] hover:bg-[#ccdff7] active:scale-95 text-[#0066d6] flex items-center justify-center shadow-sm cursor-pointer transition-all duration-200"
-                  >
+                <button
+                  onClick={() => setSubView('active')}
+                  className="flex flex-col items-center text-center focus:outline-none select-none group w-44 py-2 cursor-pointer border-none bg-transparent"
+                >
+                  <div className="w-[82px] h-[82px] rounded-full bg-[#e3effb] group-hover:bg-[#ccdff7] group-active:scale-95 text-[#0066d6] flex items-center justify-center shadow-sm transition-all duration-200">
                     <ListCustomIcon className="w-9 h-9 text-black" />
-                  </button>
-                  <span className="text-[15px] font-semibold text-[#1a1a1a] mt-3">
+                  </div>
+                  <span className="text-[15px] font-semibold text-[#1a1a1a] mt-3 group-hover:text-[#0066d6] transition-colors">
                     Visualizza
                   </span>
                   <span className="text-[12px] text-[#737373] font-normal mt-0.5">
                     {activeTickets.length} aperte
                   </span>
-                </div>
+                </button>
 
                 {/* 3. BUTTON: STORICO (Purple Style) */}
-                <div className="flex flex-col items-center text-center">
-                  <button
-                    onClick={() => setSubView('history')}
-                    className="w-[82px] h-[82px] rounded-full bg-[#f0ebf8] hover:bg-[#e2d8f3] active:scale-95 text-[#633cb3] flex items-center justify-center shadow-sm cursor-pointer transition-all duration-200"
-                  >
+                <button
+                  onClick={() => setSubView('history')}
+                  className="flex flex-col items-center text-center focus:outline-none select-none group w-44 py-2 cursor-pointer border-none bg-transparent"
+                >
+                  <div className="w-[82px] h-[82px] rounded-full bg-[#f0ebf8] group-hover:bg-[#e2d8f3] group-active:scale-95 text-[#633cb3] flex items-center justify-center shadow-sm transition-all duration-200">
                     <img src={img205} alt="Storico" className="w-9 h-9 object-contain" />
-                  </button>
-                  <span className="text-[15px] font-semibold text-[#1a1a1a] mt-3">
+                  </div>
+                  <span className="text-[15px] font-semibold text-[#1a1a1a] mt-3 group-hover:text-[#633cb3] transition-colors">
                     Storico
                   </span>
                   <span className="text-[12px] text-[#737373] font-normal mt-0.5">
                     {historyTickets.length} chiuse
                   </span>
-                </div>
+                </button>
 
               </div>
             )}
@@ -683,65 +736,26 @@ export default function App() {
                   </p>
                 </div>
 
-                {/* Category lists styled exactly as image_81f0e6.png */}
+                {/* Category lists dynamic map of all 15 categories */}
                 <div className="w-full flex flex-col space-y-4 pt-2">
-
-                  {/* Card 1: Sposta Data */}
-                  <div className="w-full bg-white border border-neutral-200 rounded-lg overflow-hidden ms-card-shadow flex flex-col">
-                    <div className="h-1 w-full bg-[#00a49f]"></div>
-                    <div className="p-4 flex items-center justify-between">
-                      <span className="text-[15px] font-semibold text-neutral-800">Sposta Data</span>
-                      <button
-                        onClick={() => { setSelectedCategory('Sposta Data'); setSubView('create_form'); }}
-                        className="text-[#00a49f] text-[13px] font-semibold flex items-center gap-1 hover:underline cursor-pointer"
-                      >
-                        Seleziona <ChevronRight size={14} />
-                      </button>
+                  {CATEGORIES.map((cat) => (
+                    <div key={cat.name} className="w-full bg-white border border-neutral-200 rounded-lg overflow-hidden ms-card-shadow flex flex-col">
+                      <div className="h-1 w-full" style={{ backgroundColor: cat.color }}></div>
+                      <div className="p-4 flex items-center justify-between gap-4">
+                        <div className="flex flex-col text-left">
+                          <span className="text-[15px] font-semibold text-neutral-800">{cat.name}</span>
+                          <span className="text-[11px] text-neutral-400 font-normal mt-0.5 line-clamp-1">{cat.info}</span>
+                        </div>
+                        <button
+                          onClick={() => handleSelectCategory(cat.name)}
+                          className="text-[13px] font-semibold flex items-center gap-1 hover:underline cursor-pointer shrink-0 border-none bg-transparent"
+                          style={{ color: cat.color }}
+                        >
+                          Seleziona <ChevronRight size={14} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Card 2: Non Conformità */}
-                  <div className="w-full bg-white border border-neutral-200 rounded-lg overflow-hidden ms-card-shadow flex flex-col">
-                    <div className="h-1 w-full bg-[#d83b01]"></div>
-                    <div className="p-4 flex items-center justify-between">
-                      <span className="text-[15px] font-semibold text-neutral-800">Non Conformità</span>
-                      <button
-                        onClick={() => { setSelectedCategory('Non Conformità'); setSubView('create_form'); }}
-                        className="text-[#d83b01] text-[13px] font-semibold flex items-center gap-1 hover:underline cursor-pointer"
-                      >
-                        Seleziona <ChevronRight size={14} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Card 3: Sollecito */}
-                  <div className="w-full bg-white border border-neutral-200 rounded-lg overflow-hidden ms-card-shadow flex flex-col">
-                    <div className="h-1 w-full bg-[#ffb900]"></div>
-                    <div className="p-4 flex items-center justify-between">
-                      <span className="text-[15px] font-semibold text-neutral-800">Sollecito</span>
-                      <button
-                        onClick={() => { setSelectedCategory('Sollecito'); setSubView('create_form'); }}
-                        className="text-[#ffb900] text-[13px] font-semibold flex items-center gap-1 hover:underline cursor-pointer"
-                      >
-                        Seleziona <ChevronRight size={14} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Card 4: Giacenza Articolo */}
-                  <div className="w-full bg-white border border-neutral-200 rounded-lg overflow-hidden ms-card-shadow flex flex-col">
-                    <div className="h-1 w-full bg-[#0078d4]"></div>
-                    <div className="p-4 flex items-center justify-between">
-                      <span className="text-[15px] font-semibold text-neutral-800">Giacenza Articolo</span>
-                      <button
-                        onClick={() => { setSelectedCategory('Giacenza Articolo'); setSubView('create_form'); }}
-                        className="text-[#0078d4] text-[13px] font-semibold flex items-center gap-1 hover:underline cursor-pointer"
-                      >
-                        Seleziona <ChevronRight size={14} />
-                      </button>
-                    </div>
-                  </div>
-
+                  ))}
                 </div>
 
               </div>
@@ -753,201 +767,329 @@ export default function App() {
 
                 <button
                   onClick={() => setSubView('create_select')}
-                  className="w-10 h-10 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer"
+                  className="w-10 h-10 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer border-none"
                 >
                   <ArrowLeft size={18} className="text-neutral-700" />
                 </button>
 
-                {/* Conditional Form Layout: SPOSTA DATA vs OTHERS */}
-                {selectedCategory === 'Sposta Data' ? (
-                  /* SPOSTA DATA PAGE FORM modeled after image_81f545.png with modern layout changes */
-                  <div className="w-full space-y-5">
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-[26px] font-light text-neutral-800 tracking-tight leading-tight">
-                          Nuova richiesta
-                        </h2>
-                        <span className="text-teal-600 cursor-pointer hover:opacity-80">
-                          <Info size={18} />
-                        </span>
-                      </div>
-                      <p className="text-[13px] text-neutral-500 font-semibold uppercase tracking-wider">
-                        Sposta Data
-                      </p>
-                    </div>
-
-                    {/* Generale Tab Header Section */}
-                    <div className="border-b border-neutral-200 pb-2">
-                      <span className="text-sm font-semibold text-[#00a49f] pb-2.5 border-b-2 border-[#00a49f] inline-block">
-                        Generale
-                      </span>
-                    </div>
-
-                    <form onSubmit={handleCreateRequest} className="space-y-5">
-
-                      {/* Nome Cliente Input with lookup modal trigger - Modernized layout */}
-                      <div className="space-y-1">
-                        <label className="block text-[12px] font-semibold text-neutral-600">
-                          Nome cliente
-                        </label>
-                        <div
-                          onClick={() => { setLookupSearch(''); setActiveModal('customer'); }}
-                          className="w-full px-3.5 py-3 rounded-xl border border-neutral-200 hover:border-neutral-300 bg-neutral-50 flex justify-between items-center cursor-pointer transition"
-                        >
-                          <span className={selectedCustomer ? "text-neutral-800 text-sm font-medium" : "text-neutral-400 text-sm"}>
-                            {selectedCustomer ? selectedCustomer.desc : "Seleziona nome cliente..."}
-                          </span>
-                          <Search size={16} className="text-neutral-400" />
-                        </div>
-                      </div>
-
-                      {/* Numero articolo Input with lookup modal trigger - Modernized layout */}
-                      <div className="space-y-1">
-                        <label className="block text-[12px] font-semibold text-neutral-600">
-                          Numero articolo
-                        </label>
-                        <div
-                          onClick={() => { setLookupSearch(''); setActiveModal('item'); }}
-                          className="w-full px-3.5 py-3 rounded-xl border border-neutral-200 hover:border-neutral-300 bg-neutral-50 flex justify-between items-center cursor-pointer transition"
-                        >
-                          <span className={selectedItem ? "text-neutral-800 text-sm font-medium" : "text-neutral-400 text-sm"}>
-                            {selectedItem ? selectedItem.desc : "Seleziona numero articolo..."}
-                          </span>
-                          <Search size={16} className="text-neutral-400" />
-                        </div>
-                      </div>
-
-                      {/* Date selection rows */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="block text-[12px] font-semibold text-neutral-600">
-                            Vecchia data
-                          </label>
-                          <div className="relative">
-                            <input
-                              type="date"
-                              value={oldDate}
-                              onChange={(e) => setOldDate(e.target.value)}
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:border-[#00a49f] focus:ring-1 focus:ring-[#00a49f] outline-none text-sm transition bg-neutral-50/50 focus:bg-white"
-                              required
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="block text-[12px] font-semibold text-neutral-600">
-                            Nuova data
-                          </label>
-                          <div className="relative">
-                            <input
-                              type="date"
-                              value={newDate}
-                              onChange={(e) => setNewDate(e.target.value)}
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:border-[#00a49f] focus:ring-1 focus:ring-[#00a49f] outline-none text-sm transition bg-neutral-50/50 focus:bg-white"
-                              required
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Action buttons configured after image_81f545.png */}
-                      <div className="flex gap-3 justify-end pt-5 border-t border-neutral-100">
-                        <button
-                          type="button"
-                          onClick={() => setSubView('create_select')}
-                          className="px-5 py-2.5 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-neutral-600 text-sm font-semibold transition"
-                        >
-                          Annulla
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-6 py-2.5 rounded-xl bg-[#00a49f] hover:bg-[#008f8a] text-white text-sm font-semibold transition shadow-md"
-                        >
-                          Salva
-                        </button>
-                      </div>
-
-                    </form>
-
+                <div className="w-full space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-[26px] font-light text-neutral-800 tracking-tight leading-tight">
+                      Nuova richiesta
+                    </h2>
+                    <span className="text-neutral-400 cursor-pointer hover:text-neutral-600 transition" title={selectedCategory}>
+                      <Info size={16} />
+                    </span>
                   </div>
-                ) : (
-                  /* Standard dynamic form for other request categories */
-                  <div className="w-full space-y-4">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-wide">
-                        {selectedCategory}
-                      </span>
-                      <h2 className="text-[26px] font-light text-neutral-800 tracking-tight leading-tight">
-                        Dettagli Richiesta
-                      </h2>
-                    </div>
+                  <p className="text-[13px] text-neutral-500 font-semibold uppercase tracking-wider">
+                    {selectedCategory}
+                  </p>
+                </div>
 
-                    <div className="w-full bg-white border border-neutral-200 p-5 rounded-2xl ms-card-shadow space-y-4">
-                      <form onSubmit={handleCreateRequest} className="space-y-4">
-                        <div>
-                          <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
-                            Oggetto <span className="text-red-500">*</span>
+                {/* Tabs selection bar */}
+                <div className="w-full flex items-center gap-6 border-b border-neutral-200 text-xs mt-3 select-none">
+                  <button
+                    type="button"
+                    onClick={() => setFormTab('details')}
+                    className={`pb-2.5 font-bold uppercase tracking-wider transition-all border-b-2 bg-transparent cursor-pointer border-none ${
+                      formTab === 'details'
+                        ? 'border-[#00a49f] text-[#00a49f]'
+                        : 'border-transparent text-neutral-400 hover:text-neutral-700'
+                    }`}
+                  >
+                    Dettagli
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormTab('notes')}
+                    className={`pb-2.5 font-bold uppercase tracking-wider transition-all border-b-2 bg-transparent cursor-pointer border-none ${
+                      formTab === 'notes'
+                        ? 'border-[#00a49f] text-[#00a49f]'
+                        : 'border-transparent text-neutral-400 hover:text-neutral-700'
+                    }`}
+                  >
+                    Note ({formNotes.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormTab('attachments')}
+                    className={`pb-2.5 font-bold uppercase tracking-wider transition-all border-b-2 bg-transparent cursor-pointer border-none ${
+                      formTab === 'attachments'
+                        ? 'border-[#00a49f] text-[#00a49f]'
+                        : 'border-transparent text-neutral-400 hover:text-neutral-700'
+                    }`}
+                  >
+                    Allegati ({formAttachments.length})
+                  </button>
+                </div>
+
+                {/* Tab Panel rendering */}
+                {formTab === 'details' && (
+                  <div className="w-full">
+                    {selectedCategory === 'Sposta Data' ? (
+                      /* SPOSTA DATA PAGE FORM modeled after image_81f545.png with modern layout changes */
+                      <form onSubmit={handleCreateRequest} className="w-full space-y-5">
+
+                        {/* Nome Cliente Input with lookup modal trigger - Modernized layout */}
+                        <div className="space-y-1">
+                          <label className="block text-[12px] font-semibold text-neutral-600">
+                            Nome cliente
                           </label>
-                          <input
-                            type="text"
-                            placeholder="e.g., Segnalazione anomalia carico..."
-                            value={formSubject}
-                            onChange={(e) => setFormSubject(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:border-[#0078d4] focus:ring-1 focus:ring-[#0078d4] outline-none text-sm transition bg-neutral-50/50"
-                            required
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-2">
-                            Priorità
-                          </label>
-                          <div className="grid grid-cols-3 gap-2">
-                            {['Low', 'Medium', 'High'].map((level) => {
-                              const isSelected = formUrgency === level;
-                              const colors = level === 'High'
-                                ? 'border-red-200 bg-red-50 text-red-700'
-                                : level === 'Medium'
-                                  ? 'border-amber-200 bg-amber-50 text-amber-700'
-                                  : 'border-green-200 bg-green-50 text-green-700';
-
-                              return (
-                                <button
-                                  key={level}
-                                  type="button"
-                                  onClick={() => setFormUrgency(level)}
-                                  className={`py-2 rounded-xl text-xs font-semibold border transition text-center ${isSelected ? `${colors} ring-1 ring-neutral-400` : 'border-neutral-200 text-neutral-600 bg-white hover:bg-neutral-50'
-                                    }`}
-                                >
-                                  {level === 'High' ? 'Alta' : level === 'Medium' ? 'Media' : 'Bassa'}
-                                </button>
-                              );
-                            })}
+                          <div
+                            onClick={() => { setLookupSearch(''); setActiveModal('customer'); }}
+                            className="w-full px-3.5 py-3 rounded-xl border border-neutral-200 hover:border-neutral-300 bg-neutral-50 flex justify-between items-center cursor-pointer transition"
+                          >
+                            <span className={selectedCustomer ? "text-neutral-800 text-sm font-medium" : "text-neutral-400 text-sm"}>
+                              {selectedCustomer ? selectedCustomer.desc : "Seleziona nome cliente..."}
+                            </span>
+                            <Search size={16} className="text-neutral-400" />
                           </div>
                         </div>
 
-                        <div>
-                          <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
-                            Note descrittive
+                        {/* Numero articolo Input with lookup modal trigger - Modernized layout */}
+                        <div className="space-y-1">
+                          <label className="block text-[12px] font-semibold text-neutral-600">
+                            Numero articolo
                           </label>
-                          <textarea
-                            placeholder="Inserisci dettagli aggiuntivi..."
-                            rows={3}
-                            value={formDesc}
-                            onChange={(e) => setFormDesc(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:border-[#0078d4] focus:ring-1 focus:ring-[#0078d4] outline-none text-sm transition bg-neutral-50/50 resize-none"
-                          />
+                          <div
+                            onClick={() => { setLookupSearch(''); setActiveModal('item'); }}
+                            className="w-full px-3.5 py-3 rounded-xl border border-neutral-200 hover:border-neutral-300 bg-neutral-50 flex justify-between items-center cursor-pointer transition"
+                          >
+                            <span className={selectedItem ? "text-neutral-800 text-sm font-medium" : "text-neutral-400 text-sm"}>
+                              {selectedItem ? selectedItem.desc : "Seleziona numero articolo..."}
+                            </span>
+                            <Search size={16} className="text-neutral-400" />
+                          </div>
                         </div>
 
-                        <button
-                          type="submit"
-                          className="w-full py-3 rounded-xl bg-[#0067b8] hover:bg-[#005da6] text-white text-sm font-semibold shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                          <span>Invia Richiesta</span>
-                          <ArrowRight size={15} />
-                        </button>
+                        {/* Date selection rows */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="block text-[12px] font-semibold text-neutral-600">
+                              Vecchia data
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="date"
+                                value={oldDate}
+                                onChange={(e) => setOldDate(e.target.value)}
+                                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:border-[#00a49f] focus:ring-1 focus:ring-[#00a49f] outline-none text-sm transition bg-neutral-50/50 focus:bg-white"
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="block text-[12px] font-semibold text-neutral-600">
+                              Nuova data
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="date"
+                                value={newDate}
+                                onChange={(e) => setNewDate(e.target.value)}
+                                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:border-[#00a49f] focus:ring-1 focus:ring-[#00a49f] outline-none text-sm transition bg-neutral-50/50 focus:bg-white"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action buttons configured after image_81f545.png */}
+                        <div className="flex gap-3 justify-end pt-5 border-t border-neutral-100">
+                          <button
+                            type="button"
+                            onClick={() => setSubView('create_select')}
+                            className="px-5 py-2.5 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-neutral-600 text-sm font-semibold transition cursor-pointer border-none bg-transparent"
+                          >
+                            Annulla
+                          </button>
+                          <button
+                            type="submit"
+                            className="px-6 py-2.5 rounded-xl bg-[#00a49f] hover:bg-[#008f8a] text-white text-sm font-semibold transition shadow-md cursor-pointer border-none"
+                          >
+                            Salva
+                          </button>
+                        </div>
+
                       </form>
+                    ) : (
+                      /* Standard dynamic form for other request categories */
+                      <div className="w-full space-y-4">
+                        <div className="w-full bg-white border border-neutral-200 p-5 rounded-2xl ms-card-shadow space-y-4">
+                          <form onSubmit={handleCreateRequest} className="space-y-4">
+                            <div>
+                              <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
+                                Oggetto <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g., Segnalazione anomalia carico..."
+                                value={formSubject}
+                                onChange={(e) => setFormSubject(e.target.value)}
+                                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:border-[#0078d4] focus:ring-1 focus:ring-[#0078d4] outline-none text-sm transition bg-neutral-50/50"
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-2">
+                                Priorità
+                              </label>
+                              <div className="grid grid-cols-3 gap-2">
+                                {['Low', 'Medium', 'High'].map((level) => {
+                                  const isSelected = formUrgency === level;
+                                  const colors = level === 'High'
+                                    ? 'border-red-200 bg-red-50 text-red-700'
+                                    : level === 'Medium'
+                                      ? 'border-amber-200 bg-amber-50 text-amber-700'
+                                      : 'border-green-200 bg-green-50 text-green-700';
+
+                                  return (
+                                    <button
+                                      key={level}
+                                      type="button"
+                                      onClick={() => setFormUrgency(level)}
+                                      className={`py-2 rounded-xl text-xs font-semibold border transition text-center cursor-pointer ${isSelected ? `${colors} ring-1 ring-neutral-400` : 'border-neutral-200 text-neutral-600 bg-white hover:bg-neutral-50'
+                                        }`}
+                                    >
+                                      {level === 'High' ? 'Alta' : level === 'Medium' ? 'Media' : 'Bassa'}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
+                                Note descrittive
+                              </label>
+                              <textarea
+                                placeholder="Inserisci dettagli aggiuntivi..."
+                                rows={3}
+                                value={formDesc}
+                                onChange={(e) => setFormDesc(e.target.value)}
+                                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:border-[#0078d4] focus:ring-1 focus:ring-[#0078d4] outline-none text-sm transition bg-neutral-50/50 resize-none"
+                              />
+                            </div>
+
+                            <button
+                              type="submit"
+                              className="w-full py-3 rounded-xl bg-[#0067b8] hover:bg-[#005da6] text-white text-sm font-semibold shadow-md transition flex items-center justify-center gap-2 cursor-pointer border-none"
+                            >
+                              <span>Invia Richiesta</span>
+                              <ArrowRight size={15} />
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {formTab === 'notes' && (
+                  <div className="w-full space-y-4 pt-2">
+                    <div className="space-y-3 w-full">
+                      {formNotes.length === 0 ? (
+                        <p className="text-xs text-neutral-400 italic text-center py-6 bg-neutral-50 rounded-2xl border border-dashed border-neutral-200">
+                          Nessuna nota aggiunta a questa richiesta.
+                        </p>
+                      ) : (
+                        <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                          {formNotes.map((note, idx) => (
+                            <div key={idx} className="bg-neutral-50 p-3.5 rounded-2xl border border-neutral-100 flex justify-between items-start">
+                              <div className="space-y-1 text-left">
+                                <span className="text-[10px] font-bold text-[#00a49f] block">Nota {idx + 1}</span>
+                                <p className="text-xs text-neutral-700 leading-normal">{note}</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setFormNotes(formNotes.filter((_, i) => i !== idx))}
+                                className="text-neutral-400 hover:text-red-500 transition cursor-pointer border-none bg-transparent"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2 pt-2 border-t border-neutral-100 w-full">
+                      <textarea
+                        placeholder="Inserisci una nota descrittiva o commento per questa richiesta..."
+                        rows={2.5}
+                        value={newFormNoteText}
+                        onChange={(e) => setNewFormNoteText(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 focus:border-[#00a49f] focus:ring-1 focus:ring-[#00a49f] outline-none text-xs bg-neutral-50 focus:bg-white resize-none transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newFormNoteText.trim()) {
+                            setFormNotes([...formNotes, newFormNoteText.trim()]);
+                            setNewFormNoteText('');
+                          }
+                        }}
+                        disabled={!newFormNoteText.trim()}
+                        className="w-full py-2.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 disabled:opacity-50 text-neutral-600 text-xs font-semibold transition cursor-pointer border-none"
+                      >
+                        Aggiungi Nota
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {formTab === 'attachments' && (
+                  <div className="w-full space-y-4 pt-2">
+                    <div className="space-y-3 w-full">
+                      {formAttachments.length === 0 ? (
+                        <p className="text-xs text-neutral-400 italic text-center py-6 bg-neutral-50 rounded-2xl border border-dashed border-neutral-200">
+                          Nessun allegato inserito.
+                        </p>
+                      ) : (
+                        <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                          {formAttachments.map((file, idx) => (
+                            <div key={idx} className="bg-neutral-50 px-3.5 py-2.5 rounded-2xl border border-neutral-100 flex items-center justify-between">
+                              <div className="flex items-center gap-2.5 truncate">
+                                <Paperclip size={13} className="text-[#00a49f] shrink-0" />
+                                <span className="text-xs text-neutral-700 font-medium truncate">{file.name}</span>
+                                <span className="text-[10px] text-neutral-400 font-normal shrink-0">({(file.size / 1024).toFixed(1)} KB)</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setFormAttachments(formAttachments.filter((_, i) => i !== idx))}
+                                className="text-neutral-400 hover:text-red-500 transition cursor-pointer shrink-0 border-none bg-transparent"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-2 border-t border-neutral-100 w-full">
+                      <label className="w-full h-24 border border-dashed border-neutral-200 rounded-xl flex flex-col justify-center items-center gap-1.5 hover:bg-neutral-50/50 cursor-pointer transition">
+                        <UploadCloud size={20} className="text-neutral-400" />
+                        <span className="text-[11px] text-neutral-500 font-semibold">Seleziona File</span>
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            if (files.length > 0) {
+                              const newAttachments = files.map(file => ({
+                                name: file.name,
+                                size: file.size
+                              }));
+                              setFormAttachments([...formAttachments, ...newAttachments]);
+                            }
+                            e.target.value = '';
+                          }}
+                          multiple
+                        />
+                      </label>
                     </div>
                   </div>
                 )}
@@ -1179,7 +1321,7 @@ export default function App() {
                   <span className="block text-sm font-semibold text-neutral-800">Azioni</span>
 
                   {/* Action Link items */}
-                  <div className="space-y-2.5">
+                  <div className="space-y-3">
 
                     {/* Action 1: Prendi in carico (Take ownership) */}
                     <button
@@ -1200,11 +1342,42 @@ export default function App() {
                       </span>
                     </button>
 
+                    {/* Dynamic Operator Assignee Selection dropdown */}
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Riassegna Operatore</label>
+                      <select
+                        value={selectedTicket.assignee === 'Nessun assegnatario' ? 'Non assegnato' : selectedTicket.assignee}
+                        onChange={(e) => {
+                          const newAssignee = e.target.value;
+                          const currentFormattedTime = getFormattedDateTime();
+                          // Update in activeTickets list
+                          setActiveTickets(activeTickets.map(t =>
+                            t.id === selectedTicket.id ? { ...t, assignee: newAssignee, lastUpdate: currentFormattedTime } : t
+                          ));
+                          // Update in historyTickets list if it's resolved
+                          setHistoryTickets(historyTickets.map(t =>
+                            t.id === selectedTicket.id ? { ...t, assignee: newAssignee, lastUpdate: currentFormattedTime } : t
+                          ));
+                          // Update current selected
+                          setSelectedTicket({ ...selectedTicket, assignee: newAssignee, lastUpdate: currentFormattedTime });
+                          triggerNotification(`Ticket assegnato a ${newAssignee}.`);
+                        }}
+                        className="w-full px-3.5 py-3 rounded-xl border border-neutral-200 text-xs font-semibold text-neutral-700 bg-neutral-50 outline-none transition focus:bg-white cursor-pointer"
+                      >
+                        <option value="Non assegnato">Non assegnato</option>
+                        <option value="Key-Ticket Agent">Key-Ticket Agent (Te)</option>
+                        <option value="Marco Rossi">Marco Rossi</option>
+                        <option value="Laura Conti">Laura Conti</option>
+                        <option value="Giulia Bianchi">Giulia Bianchi</option>
+                        <option value="Andrea Ferri">Andrea Ferri</option>
+                      </select>
+                    </div>
+
                     {/* Action 2: Segna come risolto */}
                     {previousView === 'active' && (
                       <button
                         onClick={() => resolveTicket(selectedTicket.id)}
-                        className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 font-semibold text-xs active:scale-[0.99] transition text-left"
+                        className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 font-semibold text-xs active:scale-[0.99] transition text-left cursor-pointer"
                       >
                         <Check size={16} className="text-green-500" />
                         <span>Segna come risolto</span>
@@ -1215,7 +1388,7 @@ export default function App() {
                     {previousView === 'active' && (
                       <button
                         onClick={() => closeOrRejectTicket(selectedTicket.id)}
-                        className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl border border-red-100 bg-red-50/20 hover:bg-red-50/50 text-red-700 font-semibold text-xs active:scale-[0.99] transition text-left"
+                        className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl border border-red-100 bg-red-50/20 hover:bg-red-50/50 text-red-700 font-semibold text-xs active:scale-[0.99] transition text-left cursor-pointer"
                       >
                         <X size={16} className="text-red-500" />
                         <span>Chiudi ticket</span>
