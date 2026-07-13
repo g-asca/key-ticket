@@ -907,7 +907,7 @@ export default function App() {
           </header>
 
           {/* Main workspace frame container */}
-          <main className="relative flex-grow flex flex-col items-center justify-start overflow-y-auto overscroll-none w-full max-w-md mx-auto px-5 py-6 bg-white shadow-sm border-x border-neutral-100">
+          <main className={`relative flex-grow flex flex-col items-center justify-start overflow-y-auto overscroll-none w-full max-w-md mx-auto bg-white shadow-sm ${subView === 'hub' && hubStyle === 'classic' ? 'p-0 border-none' : 'px-5 py-6 border-x border-neutral-100'}`}>
 
             {subView === 'notifications' && (
               /* ================= SUB-VIEW: NOTIFICATIONS ================= */
@@ -981,10 +981,10 @@ export default function App() {
 
             {subView === 'hub' && (
               /* ================= SUB-VIEW: GRAPHIC THEMED HUB ================= */
-              <div className="w-full h-full flex flex-col fade-in">
+              <div className="w-full flex-1 flex flex-col fade-in">
                 {hubStyle === 'classic' ? (
-                  /* 1. CLASSIC STACKED BANDS THEME – full-bleed, no padding leakage */
-                  <div className="absolute inset-0 flex flex-col" style={{ zIndex: 0 }}>
+                  /* 1. CLASSIC STACKED BANDS THEME – fills main directly (no padding on main when active) */
+                  <div className="flex flex-col w-full h-full flex-1">
                     {[
                       {
                         id: 'new',
