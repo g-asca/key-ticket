@@ -943,7 +943,7 @@ export default function App() {
 
                 <button
                   onClick={() => setSubView('hub')}
-                  className="w-10 h-10 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer"
+                  className="w-10 h-10 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer border-none"
                 >
                   <ArrowLeft size={18} className="text-neutral-700" />
                 </button>
