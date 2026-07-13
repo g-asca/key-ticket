@@ -25,7 +25,9 @@ import {
   Paperclip,
   Users,
   Edit,
-  Settings
+  Settings,
+  Bookmark,
+  BookmarkCheck
 } from 'lucide-react';
 
 import logoImg from './assets/media__1783603526191.png';
@@ -214,6 +216,22 @@ export default function App() {
     return '2026';
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Favourites / Shortcuts
+  const [favourites, setFavourites] = useState(() => {
+    try {
+      const raw = localStorage.getItem('keyfor-favourites');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  });
+
+  const toggleFavourite = (catName) => {
+    setFavourites(prev => {
+      const next = prev.includes(catName) ? prev.filter(f => f !== catName) : [...prev, catName];
+      localStorage.setItem('keyfor-favourites', JSON.stringify(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     localStorage.setItem('keyfor-hub-style-v2', hubStyle);
@@ -982,6 +1000,34 @@ export default function App() {
             {subView === 'hub' && (
               /* ================= SUB-VIEW: GRAPHIC THEMED HUB ================= */
               <div className="w-full flex-1 flex flex-col fade-in">
+
+                {/* ── SHORTCUTS BAR (shown only when there are favourites) ── */}
+                {favourites.length > 0 && hubStyle !== 'classic' && (
+                  <div className="w-full mb-4">
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-2">Accesso rapido</p>
+                    <div className="flex flex-wrap gap-2">
+                      {favourites.map(catName => {
+                        const cat = CATEGORIES.find(c => c.name === catName);
+                        return (
+                          <button
+                            key={catName}
+                            onClick={() => { handleSelectCategory(catName); }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-all active:scale-95 cursor-pointer"
+                            style={{
+                              backgroundColor: `${cat?.color || '#009b96'}15`,
+                              borderColor: `${cat?.color || '#009b96'}50`,
+                              color: cat?.color || '#009b96'
+                            }}
+                          >
+                            <span style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: cat?.color || '#009b96', display: 'inline-block', flexShrink: 0 }} />
+                            {catName}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {hubStyle === 'classic' ? (
                   /* 1. CLASSIC STACKED BANDS THEME – fills main directly (no padding on main when active) */
                   <div className="flex flex-col w-full h-full flex-1">
@@ -1015,8 +1061,22 @@ export default function App() {
                         key={item.id}
                         onClick={item.onClick}
                         style={{ backgroundColor: item.color }}
-                        className="flex-1 w-full flex flex-col items-center justify-center p-6 text-white transition-all hover:brightness-95 border-none cursor-pointer select-none"
+                        className="flex-1 w-full flex flex-col items-center justify-center p-6 text-white transition-all hover:brightness-95 border-none cursor-pointer select-none relative overflow-hidden"
                       >
+                        {/* Shortcut chips on classic — bottom-left overlay */}
+                        {item.id === 'new' && favourites.length > 0 && (
+                          <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5 max-w-[85%]">
+                            {favourites.map(catName => (
+                              <button
+                                key={catName}
+                                onClick={e => { e.stopPropagation(); handleSelectCategory(catName); }}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/20 hover:bg-white/35 text-white border border-white/30 cursor-pointer transition-all active:scale-95"
+                              >
+                                + {catName}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         <div className="w-20 h-20 rounded-full bg-white/95 flex items-center justify-center shadow-md">
                           {item.icon}
                         </div>
@@ -1226,12 +1286,30 @@ export default function App() {
               /* ================= SUB-VIEW: DETAIL REQUEST FORM ================= */
               <div className="w-full flex flex-col items-start justify-start space-y-6 py-2 fade-in">
 
-                <button
-                  onClick={() => setSubView('create_select')}
-                  className="w-10 h-10 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer border-none"
-                >
-                  <ArrowLeft size={18} className="text-neutral-700" />
-                </button>
+                {/* Back + Bookmark row */}
+                <div className="w-full flex items-center justify-between">
+                  <button
+                    onClick={() => setSubView('create_select')}
+                    className="w-10 h-10 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer border-none"
+                  >
+                    <ArrowLeft size={18} className="text-neutral-700" />
+                  </button>
+
+                  {/* Bookmark / Favourite button */}
+                  <button
+                    onClick={() => toggleFavourite(selectedCategory)}
+                    title={favourites.includes(selectedCategory) ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+                    className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all active:scale-95 cursor-pointer ${
+                      favourites.includes(selectedCategory)
+                        ? 'bg-[#009b96]/10 border-[#009b96] text-[#009b96]'
+                        : 'bg-white border-neutral-200 text-neutral-400 hover:border-[#009b96]/50 hover:text-[#009b96]'
+                    }`}
+                  >
+                    {favourites.includes(selectedCategory)
+                      ? <BookmarkCheck size={18} />
+                      : <Bookmark size={18} />}
+                  </button>
+                </div>
 
                 <div className="w-full space-y-1">
                   <div className="flex items-center gap-2">
