@@ -1027,14 +1027,13 @@ export default function App() {
                   </div>
                 ) : hubStyle === 'business' ? (
                   /* 2. BUSINESS CENTRAL – original round-button layout with business colours */
-                  <div className="flex-1 flex flex-col items-center justify-center space-y-10 py-6">
+                  <div className="flex-1 flex flex-col items-center justify-evenly overflow-hidden py-4">
                     {[
                       {
                         id: 'new',
                         label: 'Crea nuova richiesta',
                         sub: 'Invia una nuova segnalazione',
                         bg: '#e1f5f4',
-                        bgHover: '#c9eeec',
                         fg: '#009b96',
                         onClick: () => setSubView('create_select'),
                         icon: <img src={img204} alt="Crea" className="w-[52px] h-[52px] object-contain" />
@@ -1044,7 +1043,6 @@ export default function App() {
                         label: 'Visualizza richieste aperte',
                         sub: `${activeTickets.length} ticket in corso`,
                         bg: '#dbeafe',
-                        bgHover: '#bfdbfe',
                         fg: '#0078D4',
                         onClick: () => setSubView('active'),
                         icon: <ListCustomIcon className="w-11 h-11 text-black" />
@@ -1054,7 +1052,6 @@ export default function App() {
                         label: 'Storico richieste',
                         sub: `${historyTickets.length} ticket chiusi`,
                         bg: '#ede9f6',
-                        bgHover: '#ddd6f0',
                         fg: '#5C2D91',
                         onClick: () => setSubView('history'),
                         icon: <img src={img205} alt="Storico" className="w-11 h-11 object-contain" />
@@ -1063,18 +1060,15 @@ export default function App() {
                       <button
                         key={item.id}
                         onClick={item.onClick}
-                        style={{ '--btn-bg': item.bg, '--btn-bgh': item.bgHover, '--btn-fg': item.fg }}
-                        className="flex flex-col items-center text-center focus:outline-none select-none group w-48 py-2 cursor-pointer border-none bg-transparent"
+                        className="flex flex-col items-center text-center focus:outline-none select-none w-48 cursor-pointer border-none bg-transparent active:scale-95 transition-transform duration-150"
                       >
                         <div
-                          className="w-[100px] h-[100px] rounded-full flex items-center justify-center shadow-sm transition-all duration-200 group-active:scale-95"
+                          className="w-[100px] h-[100px] rounded-full flex items-center justify-center shadow-sm"
                           style={{ backgroundColor: item.bg }}
-                          onMouseEnter={e => e.currentTarget.style.backgroundColor = item.bgHover}
-                          onMouseLeave={e => e.currentTarget.style.backgroundColor = item.bg}
                         >
                           {item.icon}
                         </div>
-                        <span className="text-[17px] font-semibold text-[#1a1a1a] mt-4 transition-colors" style={{ '--hover-color': item.fg }}>
+                        <span className="text-[17px] font-semibold text-[#1a1a1a] mt-4">
                           {item.label}
                         </span>
                         <span className="text-[13px] text-[#737373] font-normal mt-1">{item.sub}</span>
