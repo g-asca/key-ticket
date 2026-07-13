@@ -24,7 +24,8 @@ import {
   UploadCloud,
   Paperclip,
   Users,
-  Edit
+  Edit,
+  Settings
 } from 'lucide-react';
 
 import logoImg from './assets/media__1783603526191.png';
@@ -96,6 +97,21 @@ const ListCustomIcon = ({ className = "w-6 h-6" }) => (
   </svg>
 );
 
+const MONTH_TABS = [
+  { id: '1', label: 'Gennaio' },
+  { id: '2', label: 'Febbraio' },
+  { id: '3', label: 'Marzo' },
+  { id: '4', label: 'Aprile' },
+  { id: '5', label: 'Maggio' },
+  { id: '6', label: 'Giugno' },
+  { id: '7', label: 'Luglio' },
+  { id: '8', label: 'Agosto' },
+  { id: '9', label: 'Settembre' },
+  { id: '10', label: 'Ottobre' },
+  { id: '11', label: 'Novembre' },
+  { id: '12', label: 'Dicembre' }
+];
+
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -164,6 +180,52 @@ export default function App() {
   const [ticketDetailTab, setTicketDetailTab] = useState('details'); // 'details' | 'notes' | 'attachments' | 'actions'
   const [editTicketSubject, setEditTicketSubject] = useState('');
   const [editTicketDesc, setEditTicketDesc] = useState('');
+
+  // Settings states & persistence
+  const [hubStyle, setHubStyle] = useState(() => localStorage.getItem('keyfor-hub-style-v2') || 'classic');
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    try {
+      const raw = localStorage.getItem('keyfor-ticket-customization');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.columns) return parsed.columns;
+      }
+    } catch (e) {}
+    return { requestType: true, assignee: true, customerName: true, createdAt: true, status: true };
+  });
+  const [groupingMode, setGroupingMode] = useState(() => {
+    try {
+      const raw = localStorage.getItem('keyfor-ticket-customization');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.groupingMode) return parsed.groupingMode;
+      }
+    } catch (e) {}
+    return 'none'; // 'none' | 'assignee' | 'monthYear'
+  });
+  const [groupingYear, setGroupingYear] = useState(() => {
+    try {
+      const raw = localStorage.getItem('keyfor-ticket-customization');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.groupingYear) return parsed.groupingYear;
+      }
+    } catch (e) {}
+    return '2026';
+  });
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('keyfor-hub-style-v2', hubStyle);
+  }, [hubStyle]);
+
+  useEffect(() => {
+    localStorage.setItem('keyfor-ticket-customization', JSON.stringify({
+      columns: visibleColumns,
+      groupingMode,
+      groupingYear
+    }));
+  }, [visibleColumns, groupingMode, groupingYear]);
 
   const [ticketComments, setTicketComments] = useState({
     'KT-1004': [
@@ -343,17 +405,90 @@ export default function App() {
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
-
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('Tutte');
   const [activeSearchQuery, setActiveSearchQuery] = useState('');
+  const [historyCategoryFilter, setHistoryCategoryFilter] = useState('Tutte');
+  const [historySearchQuery, setHistorySearchQuery] = useState('');
+
+  // Sync active grouping category filters when mode changes
+  useEffect(() => {
+    if (groupingMode === 'none') {
+      setActiveCategoryFilter('Tutte');
+    } else if (groupingMode === 'assignee') {
+      setActiveCategoryFilter('all');
+    } else if (groupingMode === 'monthYear') {
+      setActiveCategoryFilter(String(new Date().getMonth() + 1));
+    }
+  }, [groupingMode]);
+
+  // Sync history grouping category filters when mode changes
+  useEffect(() => {
+    if (groupingMode === 'none' || groupingMode === 'assignee') {
+      setHistoryCategoryFilter('Tutte');
+    } else if (groupingMode === 'monthYear') {
+      setHistoryCategoryFilter(String(new Date().getMonth() + 1));
+    }
+  }, [groupingMode]);
 
   const filteredActiveTickets = activeTickets.filter(ticket => {
-    const matchesCategory = activeCategoryFilter === 'Tutte' || ticket.category === activeCategoryFilter;
+    // 1. Search filter
     const matchesSearch = activeSearchQuery === '' ||
       ticket.subject.toLowerCase().includes(activeSearchQuery.toLowerCase()) ||
       ticket.customer.toLowerCase().includes(activeSearchQuery.toLowerCase()) ||
       ticket.id.toLowerCase().includes(activeSearchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    if (!matchesSearch) return false;
+
+    // 2. Grouping tab filter
+    if (groupingMode === 'none') {
+      return activeCategoryFilter === 'Tutte' || ticket.category === activeCategoryFilter;
+    } else if (groupingMode === 'assignee') {
+      if (activeCategoryFilter === 'all') return true;
+      if (activeCategoryFilter === 'Non assegnato') return ticket.assignee === 'Non assegnato' || !ticket.assignee || ticket.assignee === 'Nessun assegnatario';
+      return ticket.assignee === activeCategoryFilter;
+    } else if (groupingMode === 'monthYear') {
+      const dateStr = ticket.creationDate ? ticket.creationDate.split(' ')[0] : ticket.date;
+      let tYear, tMonth;
+      if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        tMonth = Number(parts[1]);
+        tYear = Number(parts[2]);
+      } else {
+        const parts = dateStr.split('-');
+        tYear = Number(parts[0]);
+        tMonth = Number(parts[1]);
+      }
+      return String(tYear) === groupingYear && String(tMonth) === activeCategoryFilter;
+    }
+    return true;
+  });
+
+  const filteredHistoryTickets = historyTickets.filter(ticket => {
+    // 1. Search filter
+    const matchesSearch = historySearchQuery === '' ||
+      ticket.subject.toLowerCase().includes(historySearchQuery.toLowerCase()) ||
+      ticket.customer.toLowerCase().includes(historySearchQuery.toLowerCase()) ||
+      ticket.id.toLowerCase().includes(historySearchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+
+    // 2. Grouping tab filter (assignee grouping is disabled for history)
+    const effectiveGrouping = groupingMode === 'assignee' ? 'none' : groupingMode;
+    if (effectiveGrouping === 'none') {
+      return historyCategoryFilter === 'Tutte' || ticket.category === historyCategoryFilter;
+    } else if (effectiveGrouping === 'monthYear') {
+      const dateStr = ticket.creationDate ? ticket.creationDate.split(' ')[0] : ticket.date;
+      let tYear, tMonth;
+      if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        tMonth = Number(parts[1]);
+        tYear = Number(parts[2]);
+      } else {
+        const parts = dateStr.split('-');
+        tYear = Number(parts[0]);
+        tMonth = Number(parts[1]);
+      }
+      return String(tYear) === groupingYear && String(tMonth) === historyCategoryFilter;
+    }
+    return true;
   });
 
   useEffect(() => {
@@ -735,6 +870,14 @@ export default function App() {
                 )}
               </button>
 
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="relative p-1.5 hover:bg-neutral-800 rounded-full transition duration-150 text-neutral-300 hover:text-white cursor-pointer"
+                title="Impostazioni"
+              >
+                <Settings size={18} />
+              </button>
+
               <div className="relative">
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -764,7 +907,7 @@ export default function App() {
           </header>
 
           {/* Main workspace frame container */}
-          <main className="flex-grow flex flex-col items-center justify-start overflow-y-auto overscroll-none w-full max-w-md mx-auto px-5 py-6 bg-white shadow-sm border-x border-neutral-100">
+          <main className="relative flex-grow flex flex-col items-center justify-start overflow-y-auto overscroll-none w-full max-w-md mx-auto px-5 py-6 bg-white shadow-sm border-x border-neutral-100">
 
             {subView === 'notifications' && (
               /* ================= SUB-VIEW: NOTIFICATIONS ================= */
@@ -837,54 +980,157 @@ export default function App() {
             )}
 
             {subView === 'hub' && (
-              /* ================= SUB-VIEW: 3-ACTION CENTERED HUB ================= */
-              <div className="w-full flex flex-col items-center justify-center space-y-12 py-8 fade-in text-center">
-
-                {/* 1. BUTTON: CREA (Teal Style) */}
-                <button
-                  onClick={() => setSubView('create_select')}
-                  className="flex flex-col items-center text-center focus:outline-none select-none group w-48 py-2 cursor-pointer border-none bg-transparent"
-                >
-                  <div className="w-[100px] h-[100px] rounded-full bg-[#e1f5f4] group-hover:bg-[#c9eeec] group-active:scale-95 text-[#009b96] flex items-center justify-center shadow-sm transition-all duration-200">
-                    <img src={img204} alt="Crea" className="w-[52px] h-[52px] object-contain" />
+              /* ================= SUB-VIEW: GRAPHIC THEMED HUB ================= */
+              <div className="w-full h-full flex flex-col fade-in">
+                {hubStyle === 'classic' ? (
+                  /* 1. CLASSIC STACKED BANDS THEME – full-bleed, no padding leakage */
+                  <div className="absolute inset-0 flex flex-col" style={{ zIndex: 0 }}>
+                    {[
+                      {
+                        id: 'new',
+                        label: 'Crea nuova richiesta',
+                        sub: 'Invia una nuova segnalazione',
+                        color: '#00828E',
+                        onClick: () => setSubView('create_select'),
+                        icon: <img src={img204} alt="Crea" className="w-12 h-12 object-contain" />
+                      },
+                      {
+                        id: 'manage',
+                        label: 'Visualizza richieste aperte',
+                        sub: `${activeTickets.length} ticket in corso`,
+                        color: '#FFB900',
+                        onClick: () => setSubView('active'),
+                        icon: <ListCustomIcon className="w-10 h-10 text-black" />
+                      },
+                      {
+                        id: 'history',
+                        label: 'Storico richieste',
+                        sub: `${historyTickets.length} ticket chiusi`,
+                        color: '#D8453C',
+                        onClick: () => setSubView('history'),
+                        icon: <img src={img205} alt="Storico" className="w-10 h-10 object-contain" />
+                      }
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={item.onClick}
+                        style={{ backgroundColor: item.color }}
+                        className="flex-1 w-full flex flex-col items-center justify-center p-6 text-white transition-all hover:brightness-95 border-none cursor-pointer select-none"
+                      >
+                        <div className="w-20 h-20 rounded-full bg-white/95 flex items-center justify-center shadow-md">
+                          {item.icon}
+                        </div>
+                        <span className="text-[18px] font-bold mt-4 tracking-wide">{item.label}</span>
+                        <span className="text-[13px] text-white/80 mt-1">{item.sub}</span>
+                      </button>
+                    ))}
                   </div>
-                  <span className="text-[17px] font-semibold text-[#1a1a1a] mt-4 group-hover:text-[#009b96] transition-colors">
-                    Crea
-                  </span>
-                </button>
-
-                {/* 2. BUTTON: VISUALIZZA (Old Classic Structured List Style) */}
-                <button
-                  onClick={() => setSubView('active')}
-                  className="flex flex-col items-center text-center focus:outline-none select-none group w-48 py-2 cursor-pointer border-none bg-transparent"
-                >
-                  <div className="w-[100px] h-[100px] rounded-full bg-[#e3effb] group-hover:bg-[#ccdff7] group-active:scale-95 text-[#0066d6] flex items-center justify-center shadow-sm transition-all duration-200">
-                    <ListCustomIcon className="w-11 h-11 text-black" />
+                ) : hubStyle === 'business' ? (
+                  /* 2. BUSINESS CENTRAL – original round-button layout with business colours */
+                  <div className="flex-1 flex flex-col items-center justify-center space-y-10 py-6">
+                    {[
+                      {
+                        id: 'new',
+                        label: 'Crea',
+                        sub: 'Nuova segnalazione',
+                        bg: '#e1f5f4',
+                        bgHover: '#c9eeec',
+                        fg: '#009b96',
+                        onClick: () => setSubView('create_select'),
+                        icon: <img src={img204} alt="Crea" className="w-[52px] h-[52px] object-contain" />
+                      },
+                      {
+                        id: 'manage',
+                        label: 'Visualizza',
+                        sub: `${activeTickets.length} aperte`,
+                        bg: '#dbeafe',
+                        bgHover: '#bfdbfe',
+                        fg: '#0078D4',
+                        onClick: () => setSubView('active'),
+                        icon: <ListCustomIcon className="w-11 h-11 text-black" />
+                      },
+                      {
+                        id: 'history',
+                        label: 'Storico',
+                        sub: `${historyTickets.length} chiuse`,
+                        bg: '#ede9f6',
+                        bgHover: '#ddd6f0',
+                        fg: '#5C2D91',
+                        onClick: () => setSubView('history'),
+                        icon: <img src={img205} alt="Storico" className="w-11 h-11 object-contain" />
+                      }
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={item.onClick}
+                        style={{ '--btn-bg': item.bg, '--btn-bgh': item.bgHover, '--btn-fg': item.fg }}
+                        className="flex flex-col items-center text-center focus:outline-none select-none group w-48 py-2 cursor-pointer border-none bg-transparent"
+                      >
+                        <div
+                          className="w-[100px] h-[100px] rounded-full flex items-center justify-center shadow-sm transition-all duration-200 group-active:scale-95"
+                          style={{ backgroundColor: item.bg }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = item.bgHover}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = item.bg}
+                        >
+                          {item.icon}
+                        </div>
+                        <span className="text-[17px] font-semibold text-[#1a1a1a] mt-4 transition-colors" style={{ '--hover-color': item.fg }}>
+                          {item.label}
+                        </span>
+                        <span className="text-[13px] text-[#737373] font-normal mt-1">{item.sub}</span>
+                      </button>
+                    ))}
                   </div>
-                  <span className="text-[17px] font-semibold text-[#1a1a1a] mt-4 group-hover:text-[#0066d6] transition-colors">
-                    Visualizza
-                  </span>
-                  <span className="text-[13px] text-[#737373] font-normal mt-1">
-                    {activeTickets.length} aperte
-                  </span>
-                </button>
+                ) : (
+                  /* 3. SPOTLIGHT MODERN CARDS WITH BLUR */
+                  <div className="flex-1 w-full flex flex-col gap-4 py-2 overflow-y-auto h-full pr-1">
+                    {[
+                      {
+                        id: 'new',
+                        label: 'Crea nuova richiesta',
+                        sub: 'Nuova segnalazione',
+                        color: '#00A3A3',
+                        onClick: () => setSubView('create_select'),
+                        icon: <img src={img204} alt="Crea" className="w-[38px] h-[38px] object-contain" />
+                      },
+                      {
+                        id: 'manage',
+                        label: 'Visualizza richieste aperte',
+                        sub: `${activeTickets.length} aperte`,
+                        color: '#4A90E2',
+                        onClick: () => setSubView('active'),
+                        icon: <ListCustomIcon className="w-8 h-8 text-black" />
+                      },
+                      {
+                        id: 'history',
+                        label: 'Storico richieste',
+                        sub: `${historyTickets.length} chiuse`,
+                        color: '#8E7CC3',
+                        onClick: () => setSubView('history'),
+                        icon: <img src={img205} alt="Storico" className="w-8 h-8 object-contain" />
+                      }
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={item.onClick}
+                        style={{ backgroundColor: `${item.color}0E` }}
+                        className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left shadow-sm hover:shadow-md transition-all active:scale-[0.99] p-5 flex flex-col justify-between min-h-[140px] cursor-pointer select-none flex-1"
+                      >
+                        <div className="absolute inset-x-0 top-0 h-1.5" style={{ backgroundColor: item.color }} />
+                        <div className="absolute right-0 top-0 h-20 w-20 rounded-full blur-xl transition duration-500 group-hover:scale-110" style={{ backgroundColor: `${item.color}25` }} />
+                        
+                        <div className="flex items-start justify-between gap-3 relative z-10 w-full">
+                          <p className="font-semibold text-neutral-800 text-lg pr-4">{item.label}</p>
+                          <div className="w-12 h-12 rounded-xl border border-neutral-200 bg-white flex items-center justify-center shadow-sm shrink-0">
+                            {item.icon}
+                          </div>
+                        </div>
 
-                {/* 3. BUTTON: STORICO (Purple Style) */}
-                <button
-                  onClick={() => setSubView('history')}
-                  className="flex flex-col items-center text-center focus:outline-none select-none group w-48 py-2 cursor-pointer border-none bg-transparent"
-                >
-                  <div className="w-[100px] h-[100px] rounded-full bg-[#f0ebf8] group-hover:bg-[#e2d8f3] group-active:scale-95 text-[#633cb3] flex items-center justify-center shadow-sm transition-all duration-200">
-                    <img src={img205} alt="Storico" className="w-11 h-11 object-contain" />
+                        <span className="text-xs text-neutral-500 font-semibold relative z-10">{item.sub}</span>
+                      </button>
+                    ))}
                   </div>
-                  <span className="text-[17px] font-semibold text-[#1a1a1a] mt-4 group-hover:text-[#633cb3] transition-colors">
-                    Storico
-                  </span>
-                  <span className="text-[13px] text-[#737373] font-normal mt-1">
-                    {historyTickets.length} chiuse
-                  </span>
-                </button>
-
+                )}
               </div>
             )}
 
@@ -1440,23 +1686,55 @@ export default function App() {
                     )}
                   </div>
 
-                  {/* Horizontal Category Scroll */}
-                  <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide -mx-2 px-2">
-                    <button
-                      onClick={() => setActiveCategoryFilter('Tutte')}
-                      className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${activeCategoryFilter === 'Tutte' ? 'bg-[#009b96] text-white border-[#009b96] shadow-md shadow-[#009b96]/20' : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'}`}
-                    >
-                      Tutte
-                    </button>
-                    {CATEGORIES.map(cat => (
-                      <button
-                        key={cat.name}
-                        onClick={() => setActiveCategoryFilter(cat.name)}
-                        className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${activeCategoryFilter === cat.name ? 'bg-[#009b96] text-white border-[#009b96] shadow-md shadow-[#009b96]/20' : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'}`}
-                      >
-                        {cat.name}
-                      </button>
-                    ))}
+                  {/* Horizontal Grouping/Category Scroll */}
+                  <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide -mx-2 px-2 w-full">
+                    {groupingMode === 'none' ? (
+                      <>
+                        <button
+                          onClick={() => setActiveCategoryFilter('Tutte')}
+                          className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${activeCategoryFilter === 'Tutte' ? 'bg-[#009b96] text-white border-[#009b96] shadow-md shadow-[#009b96]/20' : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'}`}
+                        >
+                          Tutte
+                        </button>
+                        {CATEGORIES.map(cat => (
+                          <button
+                            key={cat.name}
+                            onClick={() => setActiveCategoryFilter(cat.name)}
+                            className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${activeCategoryFilter === cat.name ? 'bg-[#009b96] text-white border-[#009b96] shadow-md shadow-[#009b96]/20' : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'}`}
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
+                      </>
+                    ) : groupingMode === 'assignee' ? (
+                      ['all', 'Non assegnato', 'Key-Ticket Agent', 'Marco Rossi', 'Laura Conti', 'Giulia Bianchi', 'Andrea Ferri'].map(name => (
+                        <button
+                          key={name}
+                          onClick={() => setActiveCategoryFilter(name)}
+                          className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${
+                            activeCategoryFilter === name 
+                              ? 'bg-[#009b96] text-white border-[#009b96] shadow-md shadow-[#009b96]/20' 
+                              : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'
+                          }`}
+                        >
+                          {name === 'all' ? 'Tutte' : name === 'Key-Ticket Agent' ? 'Te' : name}
+                        </button>
+                      ))
+                    ) : (
+                      MONTH_TABS.map(month => (
+                        <button
+                          key={month.id}
+                          onClick={() => setActiveCategoryFilter(month.id)}
+                          className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${
+                            activeCategoryFilter === month.id 
+                              ? 'bg-[#009b96] text-white border-[#009b96] shadow-md shadow-[#009b96]/20' 
+                              : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'
+                          }`}
+                        >
+                          {month.label}
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -1477,25 +1755,39 @@ export default function App() {
                           onClick={() => handleOpenTicketDetails(ticket, 'active')}
                           className={`w-full p-4 flex items-center justify-between cursor-pointer hover:bg-neutral-50 transition-colors ${index !== filteredActiveTickets.length - 1 ? 'border-b border-neutral-100' : ''}`}
                         >
-                          <div className="flex flex-col space-y-1">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2.5 h-2.5 rounded-[3px]" style={{ backgroundColor: catColor }}></div>
-                              <span className="text-[14px] font-semibold text-neutral-800 tracking-tight">
-                                {ticket.category}
+                           <div className="flex flex-col space-y-1">
+                            {visibleColumns.requestType && (
+                              <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-[3px]" style={{ backgroundColor: catColor }}></div>
+                                <span className="text-[14px] font-semibold text-neutral-800 tracking-tight">
+                                  {ticket.category}
+                                </span>
+                              </div>
+                            )}
+                            {visibleColumns.customerName && (
+                              <span className="text-[13px] text-neutral-500 ml-4.5 line-clamp-1">
+                                {ticket.customer}
                               </span>
-                            </div>
-                            <span className="text-[13px] text-neutral-500 ml-4.5 line-clamp-1">
-                              {ticket.customer}
-                            </span>
-                            <span className="text-[11px] text-neutral-400 ml-4.5">
-                              {ticket.creationDate ? ticket.creationDate.split(' ')[0] : ticket.date}
-                            </span>
+                            )}
+                            {visibleColumns.createdAt && (
+                              <span className="text-[11px] text-neutral-400 ml-4.5">
+                                {ticket.creationDate ? ticket.creationDate.split(' ')[0] : ticket.date}
+                              </span>
+                            )}
+                            {visibleColumns.assignee && (
+                              <span className="text-[11px] text-neutral-400 ml-4.5 flex items-center gap-1.5">
+                                <User size={12} className="text-neutral-400 shrink-0" />
+                                <span>{ticket.assignee || 'Non assegnato'}</span>
+                              </span>
+                            )}
                           </div>
 
                           <div className="flex items-center gap-3">
-                            <span className="text-[11px] font-semibold text-[#00a49f] bg-[#e1f5f4] px-2.5 py-1 rounded-full uppercase tracking-wider">
-                              Aperto
-                            </span>
+                            {visibleColumns.status && (
+                              <span className="text-[11px] font-semibold text-[#00a49f] bg-[#e1f5f4] px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                Aperto
+                              </span>
+                            )}
                             <ArrowRight size={16} className="text-neutral-400" />
                           </div>
                         </div>
@@ -1522,17 +1814,79 @@ export default function App() {
                     Storico Ticket
                   </h2>
                   <p className="text-[14px] text-neutral-400 font-normal">
-                    {historyTickets.length} ticket chiusi
+                    {filteredHistoryTickets.length} ticket chiusi
                   </p>
                 </div>
 
-                {historyTickets.length === 0 ? (
+                {/* Filters & Search */}
+                <div className="space-y-4 w-full">
+                  {/* Search Bar */}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <Search size={16} className="text-neutral-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Cerca ticket, cliente o ID..."
+                      value={historySearchQuery}
+                      onChange={(e) => setHistorySearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2.5 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#009b96]/20 focus:border-[#009b96] transition-all ms-card-shadow text-neutral-700"
+                    />
+                    {historySearchQuery && (
+                      <button
+                        onClick={() => setHistorySearchQuery('')}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-neutral-400 hover:text-neutral-600"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Horizontal Grouping/Category Scroll */}
+                  <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide -mx-2 px-2 w-full">
+                    {(groupingMode === 'none' || groupingMode === 'assignee') ? (
+                      <>
+                        <button
+                          onClick={() => setHistoryCategoryFilter('Tutte')}
+                          className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${historyCategoryFilter === 'Tutte' ? 'bg-[#009b96] text-white border-[#009b96] shadow-md shadow-[#009b96]/20' : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'}`}
+                        >
+                          Tutte
+                        </button>
+                        {CATEGORIES.map(cat => (
+                          <button
+                            key={cat.name}
+                            onClick={() => setHistoryCategoryFilter(cat.name)}
+                            className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${historyCategoryFilter === cat.name ? 'bg-[#009b96] text-white border-[#009b96] shadow-md shadow-[#009b96]/20' : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'}`}
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
+                      </>
+                    ) : (
+                      MONTH_TABS.map(month => (
+                        <button
+                          key={month.id}
+                          onClick={() => setHistoryCategoryFilter(month.id)}
+                          className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${
+                            historyCategoryFilter === month.id 
+                              ? 'bg-[#009b96] text-white border-[#009b96] shadow-md shadow-[#009b96]/20' 
+                              : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'
+                          }`}
+                        >
+                          {month.label}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {filteredHistoryTickets.length === 0 ? (
                   <div className="bg-white border border-neutral-200 p-6 rounded-2xl text-center ms-card-shadow">
                     <p className="text-sm text-neutral-400">Nessun ticket archiviato presente nello storico.</p>
                   </div>
                 ) : (
                   <div className="bg-white border border-neutral-100 rounded-2xl ms-card-shadow overflow-hidden mt-4">
-                    {historyTickets.map((ticket, index) => {
+                    {filteredHistoryTickets.map((ticket, index) => {
                       const catObj = CATEGORIES.find(c => c.name === ticket.category);
                       const catColor = catObj ? catObj.color : '#00a49f';
                       const isResolved = ticket.status === 'Resolved';
@@ -1540,27 +1894,41 @@ export default function App() {
                         <div
                           key={ticket.id}
                           onClick={() => handleOpenTicketDetails(ticket, 'history')}
-                          className={`w-full p-4 flex items-center justify-between cursor-pointer hover:bg-neutral-50 transition-colors ${index !== historyTickets.length - 1 ? 'border-b border-neutral-100' : ''}`}
+                          className={`w-full p-4 flex items-center justify-between cursor-pointer hover:bg-neutral-50 transition-colors ${index !== filteredHistoryTickets.length - 1 ? 'border-b border-neutral-100' : ''}`}
                         >
-                          <div className="flex flex-col space-y-1">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2.5 h-2.5 rounded-[3px]" style={{ backgroundColor: catColor }}></div>
-                              <span className="text-[14px] font-semibold text-neutral-800 tracking-tight">
-                                {ticket.category}
+                           <div className="flex flex-col space-y-1">
+                            {visibleColumns.requestType && (
+                              <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-[3px]" style={{ backgroundColor: catColor }}></div>
+                                <span className="text-[14px] font-semibold text-neutral-800 tracking-tight">
+                                  {ticket.category}
+                                </span>
+                              </div>
+                            )}
+                            {visibleColumns.customerName && (
+                              <span className="text-[13px] text-neutral-500 ml-4.5 line-clamp-1">
+                                {ticket.customer}
                               </span>
-                            </div>
-                            <span className="text-[13px] text-neutral-500 ml-4.5 line-clamp-1">
-                              {ticket.customer}
-                            </span>
-                            <span className="text-[11px] text-neutral-400 ml-4.5">
-                              {ticket.creationDate ? ticket.creationDate.split(' ')[0] : ticket.date}
-                            </span>
+                            )}
+                            {visibleColumns.createdAt && (
+                              <span className="text-[11px] text-neutral-400 ml-4.5">
+                                {ticket.creationDate ? ticket.creationDate.split(' ')[0] : ticket.date}
+                              </span>
+                            )}
+                            {visibleColumns.assignee && (
+                              <span className="text-[11px] text-neutral-400 ml-4.5 flex items-center gap-1.5">
+                                <User size={12} className="text-neutral-400 shrink-0" />
+                                <span>{ticket.assignee || 'Non assegnato'}</span>
+                              </span>
+                            )}
                           </div>
 
                           <div className="flex items-center gap-3">
-                            <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${isResolved ? 'text-green-700 bg-green-50 border border-green-100' : 'text-red-700 bg-red-50 border border-red-100'}`}>
-                              {isResolved ? 'Risolto' : 'Chiuso'}
-                            </span>
+                            {visibleColumns.status && (
+                              <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${isResolved ? 'text-green-700 bg-green-50 border border-green-100' : 'text-red-700 bg-red-50 border border-red-100'}`}>
+                                {isResolved ? 'Risolto' : 'Chiuso'}
+                              </span>
+                            )}
                             <ArrowRight size={16} className="text-neutral-400" />
                           </div>
                         </div>
@@ -2081,6 +2449,167 @@ export default function App() {
                 className="w-1/2 py-4 text-[15px] font-bold text-[#a4262c] hover:bg-[#fdf3f4] transition cursor-pointer border-none bg-transparent"
               >
                 Conferma
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4 fade-in" onClick={() => setIsSettingsOpen(false)}>
+          <div 
+            className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md overflow-hidden shadow-2xl ms-card-shadow border border-neutral-100 p-5 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center pb-2 border-b border-neutral-100">
+              <h3 className="text-base font-bold text-neutral-800 tracking-tight">
+                {subView === 'hub' ? 'Impostazioni Hub' : 'Impostazioni'}
+              </h3>
+              <button 
+                onClick={() => setIsSettingsOpen(false)}
+                className="w-8 h-8 rounded-full hover:bg-neutral-100 flex items-center justify-center cursor-pointer border-none bg-transparent"
+              >
+                <X size={16} className="text-neutral-500" />
+              </button>
+            </div>
+
+            {subView === 'hub' ? (
+              /* Hub Styles Settings */
+              <div className="space-y-4">
+                <p className="text-xs text-neutral-400 font-medium">Scegli lo stile grafico della pagina Hub:</p>
+                <div className="space-y-2">
+                  {[
+                    { key: 'classic', label: 'Classico a fasce' },
+                    { key: 'business', label: 'Business Central (Nuovo)' },
+                    { key: 'spotlight', label: 'Spotlight moderno' }
+                  ].map((styleOpt) => (
+                    <label 
+                      key={styleOpt.key} 
+                      className={`flex items-center justify-between gap-3 rounded-xl border p-3 cursor-pointer transition ${
+                        hubStyle === styleOpt.key ? 'border-[#009b96] bg-[#009b96]/5 text-[#009b96]' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'
+                      }`}
+                    >
+                      <span className="text-xs font-semibold">{styleOpt.label}</span>
+                      <input 
+                        type="radio" 
+                        name="hub-style"
+                        checked={hubStyle === styleOpt.key}
+                        onChange={() => setHubStyle(styleOpt.key)}
+                        className="h-4 w-4 accent-[#009b96] cursor-pointer"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : (subView === 'active' || subView === 'history') ? (
+              /* Ticket List Customization Settings */
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+                {/* 1. Customize Fields */}
+                <div className="space-y-2.5">
+                  <div className="flex justify-between items-center">
+                    <span className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Personalizza campi</span>
+                    <button
+                      onClick={() => setVisibleColumns({ requestType: true, assignee: true, customerName: true, createdAt: true, status: true })}
+                      className="text-[10px] text-[#009b96] hover:underline font-bold bg-transparent border-none cursor-pointer"
+                    >
+                      Ripristina
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'requestType', label: 'Tipo richiesta' },
+                      { key: 'assignee', label: 'Presa in carico' },
+                      { key: 'customerName', label: 'Cliente' },
+                      { key: 'createdAt', label: 'Data' },
+                      { key: 'status', label: 'Stato' }
+                    ].map((col) => (
+                      <button
+                        key={col.key}
+                        type="button"
+                        onClick={() => {
+                          const newCols = { ...visibleColumns, [col.key]: !visibleColumns[col.key] };
+                          if (Object.values(newCols).some(v => v)) {
+                            setVisibleColumns(newCols);
+                          }
+                        }}
+                        className={`flex items-center justify-between gap-2.5 rounded-xl border p-2.5 cursor-pointer transition text-left ${
+                          visibleColumns[col.key] ? 'border-[#009b96] bg-[#009b96]/5 text-[#009b96]' : 'border-neutral-200 text-neutral-500 hover:bg-neutral-50'
+                        }`}
+                      >
+                        <span className="text-xs font-semibold">{col.label}</span>
+                        {/* Custom square indicator — no tick, just filled square */}
+                        <div
+                          className={`w-4 h-4 rounded-[3px] shrink-0 transition-all ${
+                            visibleColumns[col.key]
+                              ? 'bg-[#009b96]'
+                              : 'border-2 border-neutral-300 bg-white'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. Groupings */}
+                <div className="space-y-2.5 pt-2 border-t border-neutral-100">
+                  <span className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Raggruppamenti</span>
+                  <div className="space-y-2">
+                    {[
+                      { key: 'none', label: 'Per tipologia (predefinito)' },
+                      ...(subView === 'active' ? [{ key: 'assignee', label: 'Per assegnazione' }] : []),
+                      { key: 'monthYear', label: 'Per mese/anno' }
+                    ].map((groupOpt) => (
+                      <label 
+                        key={groupOpt.key} 
+                        className={`flex items-center justify-between gap-3 rounded-xl border p-3 cursor-pointer transition ${
+                          groupingMode === groupOpt.key ? 'border-[#009b96] bg-[#009b96]/5 text-[#009b96]' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'
+                        }`}
+                      >
+                        <span className="text-xs font-semibold">{groupOpt.label}</span>
+                        <input 
+                          type="radio" 
+                          name="ticket-grouping"
+                          checked={groupingMode === groupOpt.key}
+                          onChange={() => setGroupingMode(groupOpt.key)}
+                          className="h-4 w-4 accent-[#009b96] cursor-pointer"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Year select (if MonthYear grouping is selected) */}
+                {groupingMode === 'monthYear' && (
+                  <div className="space-y-1.5 pt-2 border-t border-neutral-100">
+                    <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Anno di riferimento</label>
+                    <select
+                      value={groupingYear}
+                      onChange={(e) => setGroupingYear(e.target.value)}
+                      className="w-full px-3.5 py-3 rounded-xl border border-neutral-200 text-xs font-semibold text-neutral-700 bg-neutral-50 outline-none transition focus:bg-white cursor-pointer"
+                    >
+                      <option value="2026">2026</option>
+                      <option value="2025">2025</option>
+                      <option value="2024">2024</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Non-customizable Page Placeholder settings */
+              <div className="space-y-4 text-center py-4">
+                <div className="bg-[#FAF9F8] border border-dashed border-neutral-200 rounded-xl p-4 text-xs text-neutral-500 leading-relaxed font-medium">
+                  Queste impostazioni sono disponibili nella lista richieste aperte/storico o nella pagina Hub.
+                </div>
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-neutral-100 flex justify-end">
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="px-5 py-2.5 rounded-xl bg-[#009b96] hover:bg-[#008f8a] text-white text-xs font-bold transition cursor-pointer shadow-sm border-none"
+              >
+                Chiudi
               </button>
             </div>
           </div>
