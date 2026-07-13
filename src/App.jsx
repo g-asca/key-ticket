@@ -1185,7 +1185,7 @@ export default function App() {
             {subView === 'create_select' && (
               /* ================= SUB-VIEW: CATEGORY SELECTION ("Nuova richiesta") ================= */
               /* Styled after image_81f0e6.png */
-              <div className="w-full flex flex-col items-start justify-start space-y-6 py-2 fade-in">
+              <div className="w-full space-y-5 py-2 fade-in">
 
                 <button
                   onClick={() => setSubView('hub')}
@@ -1194,12 +1194,12 @@ export default function App() {
                   <ArrowLeft size={18} className="text-neutral-700" />
                 </button>
 
-                <div className="space-y-1">
+                <div className="space-y-1 pb-2">
                   <h2 className="text-[28px] font-light text-neutral-800 tracking-tight leading-tight">
-                    Nuova richiesta
+                    Crea nuova richiesta
                   </h2>
                   <p className="text-[14px] text-neutral-400 font-normal">
-                    Scegli richiesta
+                    Scegli una tipologia di richiesta
                   </p>
                 </div>
 
