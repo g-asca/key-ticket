@@ -1031,8 +1031,8 @@ export default function App() {
                     {[
                       {
                         id: 'new',
-                        label: 'Crea',
-                        sub: 'Nuova segnalazione',
+                        label: 'Crea nuova richiesta',
+                        sub: 'Invia una nuova segnalazione',
                         bg: '#e1f5f4',
                         bgHover: '#c9eeec',
                         fg: '#009b96',
@@ -1041,8 +1041,8 @@ export default function App() {
                       },
                       {
                         id: 'manage',
-                        label: 'Visualizza',
-                        sub: `${activeTickets.length} aperte`,
+                        label: 'Visualizza richieste aperte',
+                        sub: `${activeTickets.length} ticket in corso`,
                         bg: '#dbeafe',
                         bgHover: '#bfdbfe',
                         fg: '#0078D4',
@@ -1051,8 +1051,8 @@ export default function App() {
                       },
                       {
                         id: 'history',
-                        label: 'Storico',
-                        sub: `${historyTickets.length} chiuse`,
+                        label: 'Storico richieste',
+                        sub: `${historyTickets.length} ticket chiusi`,
                         bg: '#ede9f6',
                         bgHover: '#ddd6f0',
                         fg: '#5C2D91',
