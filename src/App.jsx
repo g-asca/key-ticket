@@ -643,7 +643,7 @@ export default function App() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#fafbfc] flex flex-col justify-start items-center ms-font select-none">
+    <div className="w-full h-[100dvh] bg-[#fafbfc] flex flex-col justify-start items-center ms-font select-none overflow-hidden overscroll-none">
       <AzureStyleOverride />
 
       {/* SVG Filter to remove white background from PNG logo */}
@@ -675,7 +675,7 @@ export default function App() {
 
       {!isLoggedIn ? (
         /* ================= MAIN MINIMALIST LOGIN PAGE ================= */
-        <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 bg-white">
+        <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-white overflow-hidden">
           <div className="flex flex-col items-center text-center space-y-8 -mt-16 fade-in">
 
             {/* Clean Logo without box */}
@@ -709,7 +709,7 @@ export default function App() {
         </div>
       ) : (
         /* ================= MAIN DYNAMICS BC WORKSPACE ================= */
-        <div className="w-full min-h-screen flex flex-col bg-white fade-in">
+        <div className="w-full h-full flex flex-col bg-[#f0f0f0] fade-in overflow-hidden">
 
           {/* Top Header Bar formatted like Microsoft Business Central */}
           <header className="w-full h-14 bg-[#1e1e1e] border-b border-[#2d2d2d] px-4 flex justify-between items-center z-50 shadow-sm shrink-0">
@@ -764,7 +764,7 @@ export default function App() {
           </header>
 
           {/* Main workspace frame container */}
-          <main className="flex-grow flex flex-col items-center justify-start overflow-y-auto w-full max-w-md mx-auto px-5 py-6">
+          <main className="flex-grow flex flex-col items-center justify-start overflow-y-auto overscroll-none w-full max-w-md mx-auto px-5 py-6 bg-white shadow-sm border-x border-neutral-100">
 
             {subView === 'notifications' && (
               /* ================= SUB-VIEW: NOTIFICATIONS ================= */
