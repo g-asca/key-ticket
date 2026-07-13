@@ -23,7 +23,8 @@ import {
   Trash2,
   UploadCloud,
   Paperclip,
-  Users
+  Users,
+  Edit
 } from 'lucide-react';
 
 import logoImg from './assets/media__1783603526191.png';
@@ -158,6 +159,12 @@ export default function App() {
   const [showCancelWarning, setShowCancelWarning] = useState(false);
   const [cancelTarget, setCancelTarget] = useState('hub');
   const [newCommentText, setNewCommentText] = useState('');
+
+  // Ticket detail view state
+  const [ticketDetailTab, setTicketDetailTab] = useState('details'); // 'details' | 'notes' | 'attachments' | 'actions'
+  const [editTicketSubject, setEditTicketSubject] = useState('');
+  const [editTicketDesc, setEditTicketDesc] = useState('');
+
   const [ticketComments, setTicketComments] = useState({
     'KT-1004': [
       { author: 'Laura Conti', text: 'Ho verificato lo stato della spedizione su BC, sembra tutto pronto.', date: '08/07/2026 14:23' }
@@ -342,9 +349,9 @@ export default function App() {
 
   const filteredActiveTickets = activeTickets.filter(ticket => {
     const matchesCategory = activeCategoryFilter === 'Tutte' || ticket.category === activeCategoryFilter;
-    const matchesSearch = activeSearchQuery === '' || 
-      ticket.subject.toLowerCase().includes(activeSearchQuery.toLowerCase()) || 
-      ticket.customer.toLowerCase().includes(activeSearchQuery.toLowerCase()) || 
+    const matchesSearch = activeSearchQuery === '' ||
+      ticket.subject.toLowerCase().includes(activeSearchQuery.toLowerCase()) ||
+      ticket.customer.toLowerCase().includes(activeSearchQuery.toLowerCase()) ||
       ticket.id.toLowerCase().includes(activeSearchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
@@ -707,7 +714,7 @@ export default function App() {
           {/* Top Header Bar formatted like Microsoft Business Central */}
           <header className="w-full h-14 bg-[#1e1e1e] border-b border-[#2d2d2d] px-4 flex justify-between items-center z-50 shadow-sm shrink-0">
 
-            <div 
+            <div
               className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setSubView('hub')}
             >
@@ -774,7 +781,7 @@ export default function App() {
                     <h2 className="text-[20px] font-semibold text-[#1a1a1a] tracking-tight">Notifiche</h2>
                   </div>
                   {unreadCount > 0 && (
-                    <button 
+                    <button
                       onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
                       className="text-[12px] font-medium text-[#009b96] hover:underline"
                     >
@@ -884,7 +891,7 @@ export default function App() {
             {subView === 'team' && (
               /* ================= SUB-VIEW: TEAM DASHBOARD ================= */
               <div className="w-full flex flex-col space-y-6 py-2 fade-in">
-                
+
                 <button
                   onClick={() => setSubView('hub')}
                   className="w-10 h-10 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer border-none"
@@ -1005,33 +1012,30 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setFormTab('details')}
-                    className={`pb-2.5 font-bold uppercase tracking-wider transition-all border-b-2 bg-transparent cursor-pointer border-none ${
-                      formTab === 'details'
+                    className={`pb-2.5 font-bold uppercase tracking-wider transition-all border-b-2 bg-transparent cursor-pointer border-none ${formTab === 'details'
                         ? 'border-[#00a49f] text-[#00a49f]'
                         : 'border-transparent text-neutral-400 hover:text-neutral-700'
-                    }`}
+                      }`}
                   >
                     Dettagli
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormTab('notes')}
-                    className={`pb-2.5 font-bold uppercase tracking-wider transition-all border-b-2 bg-transparent cursor-pointer border-none ${
-                      formTab === 'notes'
+                    className={`pb-2.5 font-bold uppercase tracking-wider transition-all border-b-2 bg-transparent cursor-pointer border-none ${formTab === 'notes'
                         ? 'border-[#00a49f] text-[#00a49f]'
                         : 'border-transparent text-neutral-400 hover:text-neutral-700'
-                    }`}
+                      }`}
                   >
                     Note ({formNotes.length})
                   </button>
                   <button
                     type="button"
                     onClick={() => setFormTab('attachments')}
-                    className={`pb-2.5 font-bold uppercase tracking-wider transition-all border-b-2 bg-transparent cursor-pointer border-none ${
-                      formTab === 'attachments'
+                    className={`pb-2.5 font-bold uppercase tracking-wider transition-all border-b-2 bg-transparent cursor-pointer border-none ${formTab === 'attachments'
                         ? 'border-[#00a49f] text-[#00a49f]'
                         : 'border-transparent text-neutral-400 hover:text-neutral-700'
-                    }`}
+                      }`}
                   >
                     Allegati ({formAttachments.length})
                   </button>
@@ -1323,7 +1327,7 @@ export default function App() {
             {subView === 'create_review' && draftTicket && (
               /* ================= SUB-VIEW: TICKET CREATION REVIEW ================= */
               <div className="w-full flex flex-col space-y-6 py-2 fade-in">
-                
+
                 <button
                   onClick={() => setSubView('create_form')}
                   className="w-10 h-10 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer border-none"
@@ -1427,7 +1431,7 @@ export default function App() {
                       className="w-full pl-9 pr-4 py-2.5 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#009b96]/20 focus:border-[#009b96] transition-all ms-card-shadow text-neutral-700"
                     />
                     {activeSearchQuery && (
-                      <button 
+                      <button
                         onClick={() => setActiveSearchQuery('')}
                         className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-neutral-400 hover:text-neutral-600"
                       >
@@ -1438,14 +1442,14 @@ export default function App() {
 
                   {/* Horizontal Category Scroll */}
                   <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide -mx-2 px-2">
-                    <button 
+                    <button
                       onClick={() => setActiveCategoryFilter('Tutte')}
                       className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${activeCategoryFilter === 'Tutte' ? 'bg-[#009b96] text-white border-[#009b96] shadow-md shadow-[#009b96]/20' : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'}`}
                     >
                       Tutte
                     </button>
                     {CATEGORIES.map(cat => (
-                      <button 
+                      <button
                         key={cat.name}
                         onClick={() => setActiveCategoryFilter(cat.name)}
                         className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border ${activeCategoryFilter === cat.name ? 'bg-[#009b96] text-white border-[#009b96] shadow-md shadow-[#009b96]/20' : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'}`}
@@ -1487,7 +1491,7 @@ export default function App() {
                               {ticket.creationDate ? ticket.creationDate.split(' ')[0] : ticket.date}
                             </span>
                           </div>
-                          
+
                           <div className="flex items-center gap-3">
                             <span className="text-[11px] font-semibold text-[#00a49f] bg-[#e1f5f4] px-2.5 py-1 rounded-full uppercase tracking-wider">
                               Aperto
@@ -1552,7 +1556,7 @@ export default function App() {
                               {ticket.creationDate ? ticket.creationDate.split(' ')[0] : ticket.date}
                             </span>
                           </div>
-                          
+
                           <div className="flex items-center gap-3">
                             <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${isResolved ? 'text-green-700 bg-green-50 border border-green-100' : 'text-red-700 bg-red-50 border border-red-100'}`}>
                               {isResolved ? 'Risolto' : 'Chiuso'}
@@ -1570,207 +1574,334 @@ export default function App() {
 
             {subView === 'ticket_detail' && selectedTicket && (
               /* ================= SUB-VIEW: HIGH-FIDELITY TICKET DETAILS ================= */
-              /* Inspired by WhatsApp Image 2026-07-09 at 11.32.00.jpeg and updated for modern layout */
               <div className="w-full space-y-5 py-2 fade-in">
 
                 {/* Back Navigation Bar */}
-                <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+                <div className="flex items-center justify-between pb-2">
                   <button
                     onClick={() => setSubView(previousView)}
-                    className="flex items-center gap-1.5 text-neutral-500 hover:text-neutral-800 text-sm font-semibold transition"
+                    className="w-10 h-10 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition shadow-sm cursor-pointer border-none"
+                  >
+                    <ArrowLeft size={18} className="text-neutral-700" />
+                  </button>
+                  <span className="text-xs font-bold text-[#00a49f] uppercase tracking-widest bg-[#e1f5f4] px-2.5 py-1 rounded-full">{selectedTicket.id}</span>
+                </div>
+
+                <div className="space-y-1 pb-2">
+                  <h2 className="text-[28px] font-light text-neutral-800 tracking-tight leading-tight">
+                    {selectedTicket.subject || selectedTicket.category}
+                  </h2>
+                </div>
+
+                {/* Metadata Header Card */}
+                <div className="bg-white p-4 rounded-2xl border border-neutral-100 ms-card-shadow grid grid-cols-2 gap-y-3 gap-x-4">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Numero richiesta</span>
+                    <span className="text-xs text-neutral-800 font-medium">{selectedTicket.id}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Segnalato da</span>
+                    <span className="text-xs text-neutral-800 font-medium">{selectedTicket.reportedBy || selectedTicket.customer || "Cliente Occasionale"}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Presa in carico da</span>
+                    <span className="text-xs text-neutral-800 font-medium">{selectedTicket.assignee || 'Non assegnato'}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Data richiesta</span>
+                    <span className="text-xs text-neutral-800 font-medium">{selectedTicket.creationDate ? selectedTicket.creationDate.split(' ')[0] : selectedTicket.date}</span>
+                  </div>
+                  <div className="flex flex-col col-span-2 pt-1 border-t border-neutral-50">
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">Stato</span>
+                    <div>
+                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider inline-flex ${
+                        selectedTicket.status === 'Resolved' 
+                          ? 'text-green-700 bg-green-50 border border-green-100' 
+                          : previousView === 'history' 
+                            ? 'text-red-700 bg-red-50 border border-red-100'
+                            : 'text-[#00a49f] bg-[#e1f5f4] border border-[#c9eeec]'
+                      }`}>
+                        {selectedTicket.status === 'Resolved' ? 'Risolto' : previousView === 'history' ? 'Chiuso' : 'Aperto'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabs */}
+                <div className="w-full flex items-center gap-6 border-b border-neutral-200 text-xs mt-3 select-none overflow-x-auto scrollbar-hide">
+                  {[
+                    { id: 'details', label: 'Dettagli' },
+                    { id: 'notes', label: `Note (${ticketComments[selectedTicket.id]?.length || 0})` },
+                    { id: 'attachments', label: 'Allegati' },
+                    { id: 'actions', label: 'Azioni' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setTicketDetailTab(tab.id)}
+                      className={`pb-2.5 font-bold uppercase tracking-wider transition-all border-b-2 bg-transparent cursor-pointer border-none whitespace-nowrap ${
+                        ticketDetailTab === tab.id
+                          ? 'border-[#009b96] text-[#009b96]'
+                          : 'border-transparent text-neutral-400 hover:text-neutral-700'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tab Content */}
+                <div className="w-full pt-1">
+                  {ticketDetailTab === 'details' && (
+                    <div className="space-y-4 fade-in">
+                      {/* Description Block Section */}
+                      <div className="space-y-1 bg-white p-4 rounded-2xl border border-neutral-100 ms-card-shadow">
+                        <span className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Descrizione</span>
+                        <p className="text-sm text-neutral-800 leading-relaxed pt-1 font-normal">
+                          {selectedTicket.desc}
+                        </p>
+                      </div>
+
+                      {/* Tags Block Section */}
+                      <div className="space-y-1 bg-white p-4 rounded-2xl border border-neutral-100 ms-card-shadow">
+                        <span className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Tag</span>
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {selectedTicket.tags && selectedTicket.tags.length > 0 ? (
+                            selectedTicket.tags.map((tag, idx) => (
+                              <span key={idx} className="bg-neutral-100 text-neutral-700 text-xs px-2.5 py-1 rounded-full border border-neutral-200 font-medium lowercase">
+                                {tag}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs text-neutral-400 italic">Nessun tag configurato.</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 bg-white p-4 rounded-2xl border border-neutral-100 ms-card-shadow">
+                        <span className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Ultimo aggiornamento</span>
+                        <p className="text-xs text-neutral-800 pt-1">
+                          {selectedTicket.lastUpdate || selectedTicket.date}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {ticketDetailTab === 'notes' && (
+                    <div className="space-y-2.5 bg-white p-4 rounded-2xl border border-neutral-100 ms-card-shadow fade-in">
+                      <div className="space-y-3">
+                        {!(ticketComments[selectedTicket.id]) || ticketComments[selectedTicket.id].length === 0 ? (
+                          <p className="text-xs text-neutral-400 italic">Nessun commento presente.</p>
+                        ) : (
+                          ticketComments[selectedTicket.id].map((comment, idx) => (
+                            <div key={idx} className="bg-neutral-50 p-3 rounded-xl border border-neutral-100 text-left space-y-1.5">
+                              <div className="flex justify-between items-center text-[10px]">
+                                <span className="font-bold text-[#00a49f]">{comment.author}</span>
+                                <span className="text-neutral-400">{comment.date}</span>
+                              </div>
+                              <p className="text-xs text-neutral-700 leading-normal">{comment.text}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Add New Comment Block */}
+                      <form onSubmit={handleAddComment} className="pt-4 border-t border-neutral-100 space-y-2 mt-4">
+                        <label className="block text-[10px] font-bold text-neutral-400 uppercase">Nuovo commento</label>
+                        <textarea
+                          placeholder="Scrivi un commento..."
+                          rows={2}
+                          value={newCommentText}
+                          onChange={(e) => setNewCommentText(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:border-[#009b96] focus:ring-1 focus:ring-[#009b96] outline-none text-xs bg-neutral-50 focus:bg-white resize-none transition"
+                          required
+                        />
+                        <div className="flex justify-end">
+                          <button
+                            type="submit"
+                            className="bg-[#009b96] hover:bg-[#008f8a] text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-sm cursor-pointer border-none"
+                          >
+                            Commenta
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  {ticketDetailTab === 'attachments' && (
+                    <div className="bg-white p-6 rounded-2xl border border-neutral-100 ms-card-shadow text-center space-y-2 fade-in">
+                       <p className="text-sm text-neutral-500 font-medium">Nessun allegato presente</p>
+                       <p className="text-xs text-neutral-400">Questo ticket non contiene file o immagini allegate.</p>
+                    </div>
+                  )}
+
+                  {ticketDetailTab === 'actions' && (
+                    <div className="bg-white p-5 rounded-2xl border border-neutral-100 ms-card-shadow space-y-4 fade-in">
+                      
+                      {previousView === 'active' && (
+                        <div className="space-y-2 pb-4 border-b border-neutral-100">
+                          <button
+                            onClick={() => {
+                              setEditTicketSubject(selectedTicket.subject || selectedTicket.category);
+                              setEditTicketDesc(selectedTicket.desc);
+                              setSubView('ticket_edit');
+                            }}
+                            className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 font-semibold text-xs active:scale-[0.99] transition text-left cursor-pointer"
+                          >
+                            <Edit size={16} className="text-[#009b96]" />
+                            <span>Modifica Ticket / Sollecita</span>
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        {/* Action 1: Prendi in carico */}
+                        <button
+                          onClick={() => takeOwnership(selectedTicket.id)}
+                          disabled={selectedTicket.assignee === 'Key-Ticket Agent'}
+                          className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl border text-xs font-semibold transition text-left ${selectedTicket.assignee === 'Key-Ticket Agent'
+                            ? 'border-neutral-100 bg-neutral-50 text-neutral-400 cursor-not-allowed'
+                            : 'border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 active:scale-[0.99] cursor-pointer'
+                            }`}
+                        >
+                          {selectedTicket.assignee === 'Key-Ticket Agent' ? (
+                            <UserCheck size={16} className="text-[#009b96]" />
+                          ) : (
+                            <User size={16} className="text-neutral-400" />
+                          )}
+                          <span>
+                            {selectedTicket.assignee === 'Key-Ticket Agent' ? 'Sei già assegnatario' : 'Prendi in carico'}
+                          </span>
+                        </button>
+
+                        {/* Riassegna */}
+                        <div className="space-y-1.5 pt-2">
+                          <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Riassegna Operatore</label>
+                          <select
+                            value={selectedTicket.assignee === 'Nessun assegnatario' ? 'Non assegnato' : selectedTicket.assignee}
+                            onChange={(e) => {
+                              const newAssignee = e.target.value;
+                              const currentFormattedTime = getFormattedDateTime();
+                              setActiveTickets(activeTickets.map(t =>
+                                t.id === selectedTicket.id ? { ...t, assignee: newAssignee, lastUpdate: currentFormattedTime } : t
+                              ));
+                              setHistoryTickets(historyTickets.map(t =>
+                                t.id === selectedTicket.id ? { ...t, assignee: newAssignee, lastUpdate: currentFormattedTime } : t
+                              ));
+                              setSelectedTicket({ ...selectedTicket, assignee: newAssignee, lastUpdate: currentFormattedTime });
+                              triggerNotification(`Ticket assegnato a ${newAssignee}.`);
+                            }}
+                            className="w-full px-3.5 py-3 rounded-xl border border-neutral-200 text-xs font-semibold text-neutral-700 bg-neutral-50 outline-none transition focus:bg-white cursor-pointer"
+                          >
+                            <option value="Non assegnato">Non assegnato</option>
+                            <option value="Key-Ticket Agent">Key-Ticket Agent (Te)</option>
+                            <option value="Marco Rossi">Marco Rossi</option>
+                            <option value="Laura Conti">Laura Conti</option>
+                            <option value="Giulia Bianchi">Giulia Bianchi</option>
+                            <option value="Andrea Ferri">Andrea Ferri</option>
+                          </select>
+                        </div>
+
+                        {/* Risolvi */}
+                        {previousView === 'active' && (
+                          <button
+                            onClick={() => resolveTicket(selectedTicket.id)}
+                            className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 font-semibold text-xs active:scale-[0.99] transition text-left cursor-pointer mt-4"
+                          >
+                            <Check size={16} className="text-green-500" />
+                            <span>Segna come risolto</span>
+                          </button>
+                        )}
+
+                        {/* Chiudi */}
+                        {previousView === 'active' && (
+                          <button
+                            onClick={() => closeOrRejectTicket(selectedTicket.id)}
+                            className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl border border-red-100 bg-red-50/20 hover:bg-red-50/50 text-red-700 font-semibold text-xs active:scale-[0.99] transition text-left cursor-pointer"
+                          >
+                            <X size={16} className="text-red-500" />
+                            <span>Chiudi ticket</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            )}
+
+            {subView === 'ticket_edit' && selectedTicket && (
+              /* ================= SUB-VIEW: EDIT TICKET ================= */
+              <div className="w-full space-y-5 py-2 fade-in">
+                <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+                  <button
+                    onClick={() => setSubView('ticket_detail')}
+                    className="flex items-center gap-1.5 text-neutral-500 hover:text-neutral-800 text-sm font-semibold transition cursor-pointer border-none bg-transparent"
                   >
                     <ArrowLeft size={16} />
-                    <span>Torna alla lista</span>
+                    <span>Annulla</span>
                   </button>
-                  <span className="text-xs font-bold text-[#00a49f] uppercase tracking-widest">{selectedTicket.id}</span>
+                  <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Modifica Ticket</span>
                 </div>
 
-                {/* Tags Block Section */}
-                <div className="space-y-1 bg-white p-4 rounded-2xl border border-neutral-100 ms-card-shadow">
-                  <span className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Tag</span>
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {selectedTicket.tags && selectedTicket.tags.length > 0 ? (
-                      selectedTicket.tags.map((tag, idx) => (
-                        <span key={idx} className="bg-neutral-100 text-neutral-700 text-xs px-2.5 py-1 rounded-full border border-neutral-200 font-medium lowercase">
-                          {tag}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-xs text-neutral-400 italic">Nessun tag configurato.</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Description Block Section */}
-                <div className="space-y-1 bg-white p-4 rounded-2xl border border-neutral-100 ms-card-shadow">
-                  <span className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Descrizione</span>
-                  <p className="text-sm text-neutral-800 leading-relaxed pt-1 font-normal">
-                    {selectedTicket.desc}
-                  </p>
-                </div>
-
-                {/* Comment History Timeline Section */}
-                <div className="space-y-2.5 bg-white p-4 rounded-2xl border border-neutral-100 ms-card-shadow">
-                  <span className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Commenti</span>
-
-                  <div className="space-y-3 pt-1">
-                    {!(ticketComments[selectedTicket.id]) || ticketComments[selectedTicket.id].length === 0 ? (
-                      <p className="text-xs text-neutral-400 italic">Nessun commento presente.</p>
-                    ) : (
-                      ticketComments[selectedTicket.id].map((comment, idx) => (
-                        <div key={idx} className="bg-neutral-50 p-3 rounded-xl border border-neutral-100 text-left space-y-1.5">
-                          <div className="flex justify-between items-center text-[10px]">
-                            <span className="font-bold text-[#00a49f]">{comment.author}</span>
-                            <span className="text-neutral-400">{comment.date}</span>
-                          </div>
-                          <p className="text-xs text-neutral-700 leading-normal">{comment.text}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Add New Comment Block */}
-                  <form onSubmit={handleAddComment} className="pt-4 border-t border-neutral-100 space-y-2">
-                    <label className="block text-[10px] font-bold text-neutral-400 uppercase">Nuovo commento</label>
-                    <textarea
-                      placeholder="Scrivi un commento..."
-                      rows={2}
-                      value={newCommentText}
-                      onChange={(e) => setNewCommentText(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:border-[#00a49f] focus:ring-1 focus:ring-[#00a49f] outline-none text-xs bg-neutral-50 focus:bg-white resize-none transition"
-                      required
+                <div className="bg-white border border-neutral-200 rounded-2xl p-5 ms-card-shadow space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">Titolo / Oggetto</label>
+                    <input
+                      type="text"
+                      value={editTicketSubject}
+                      onChange={(e) => setEditTicketSubject(e.target.value)}
+                      className="w-full px-3.5 py-3 rounded-xl border border-neutral-200 focus:border-[#009b96] focus:ring-1 focus:ring-[#009b96] outline-none text-sm text-neutral-800 transition"
                     />
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        className="bg-[#00a49f] hover:bg-[#008f8a] text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-sm cursor-pointer"
-                      >
-                        Commenta
-                      </button>
-                    </div>
-                  </form>
-                </div>
-
-                {/* Actions and Metadata Combined Panel Card */}
-                {/* Styled precisely as shown in WhatsApp Image 2026-07-09 at 11.32.00 (1).jpeg */}
-                <div className="bg-white p-5 rounded-2xl border border-neutral-100 ms-card-shadow space-y-4">
-
-                  <span className="block text-sm font-semibold text-neutral-800">Azioni</span>
-
-                  {/* Action Link items */}
-                  <div className="space-y-3">
-
-                    {/* Action 1: Prendi in carico (Take ownership) */}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">Descrizione</label>
+                    <textarea
+                      rows={6}
+                      value={editTicketDesc}
+                      onChange={(e) => setEditTicketDesc(e.target.value)}
+                      className="w-full px-3.5 py-3 rounded-xl border border-neutral-200 focus:border-[#009b96] focus:ring-1 focus:ring-[#009b96] outline-none text-sm text-neutral-800 transition resize-none"
+                    />
+                  </div>
+                  <div className="pt-2">
                     <button
-                      onClick={() => takeOwnership(selectedTicket.id)}
-                      disabled={selectedTicket.assignee === 'Key-Ticket Agent'}
-                      className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl border text-xs font-semibold transition text-left ${selectedTicket.assignee === 'Key-Ticket Agent'
-                        ? 'border-neutral-100 bg-neutral-50 text-neutral-400 cursor-not-allowed'
-                        : 'border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 active:scale-[0.99]'
-                        }`}
+                      onClick={() => {
+                        const currentFormattedTime = getFormattedDateTime();
+                        
+                        // Update activeTickets if it exists there
+                        setActiveTickets(activeTickets.map(t => 
+                          t.id === selectedTicket.id 
+                            ? { ...t, subject: editTicketSubject, desc: editTicketDesc, lastUpdate: currentFormattedTime } 
+                            : t
+                        ));
+                        
+                        // Update historyTickets if it exists there
+                        setHistoryTickets(historyTickets.map(t => 
+                          t.id === selectedTicket.id 
+                            ? { ...t, subject: editTicketSubject, desc: editTicketDesc, lastUpdate: currentFormattedTime } 
+                            : t
+                        ));
+                        
+                        // Update selectedTicket
+                        setSelectedTicket({
+                          ...selectedTicket,
+                          subject: editTicketSubject,
+                          desc: editTicketDesc,
+                          lastUpdate: currentFormattedTime
+                        });
+                        
+                        triggerNotification(`Il ticket ${selectedTicket.id} è stato aggiornato.`);
+                        setSubView('ticket_detail');
+                      }}
+                      disabled={!editTicketSubject.trim() || !editTicketDesc.trim()}
+                      className="w-full py-3.5 rounded-xl bg-[#009b96] hover:bg-[#008f8a] text-white text-[15px] font-bold shadow-md transition cursor-pointer text-center flex items-center justify-center gap-2 border-none disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {selectedTicket.assignee === 'Key-Ticket Agent' ? (
-                        <UserCheck size={16} className="text-[#00a49f]" />
-                      ) : (
-                        <User size={16} className="text-neutral-400" />
-                      )}
-                      <span>
-                        {selectedTicket.assignee === 'Key-Ticket Agent' ? 'Sei già assegnatario' : 'Prendi in carico'}
-                      </span>
+                      <Check size={18} />
+                      <span>Salva Modifiche</span>
                     </button>
-
-                    {/* Dynamic Operator Assignee Selection dropdown */}
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Riassegna Operatore</label>
-                      <select
-                        value={selectedTicket.assignee === 'Nessun assegnatario' ? 'Non assegnato' : selectedTicket.assignee}
-                        onChange={(e) => {
-                          const newAssignee = e.target.value;
-                          const currentFormattedTime = getFormattedDateTime();
-                          // Update in activeTickets list
-                          setActiveTickets(activeTickets.map(t =>
-                            t.id === selectedTicket.id ? { ...t, assignee: newAssignee, lastUpdate: currentFormattedTime } : t
-                          ));
-                          // Update in historyTickets list if it's resolved
-                          setHistoryTickets(historyTickets.map(t =>
-                            t.id === selectedTicket.id ? { ...t, assignee: newAssignee, lastUpdate: currentFormattedTime } : t
-                          ));
-                          // Update current selected
-                          setSelectedTicket({ ...selectedTicket, assignee: newAssignee, lastUpdate: currentFormattedTime });
-                          triggerNotification(`Ticket assegnato a ${newAssignee}.`);
-                        }}
-                        className="w-full px-3.5 py-3 rounded-xl border border-neutral-200 text-xs font-semibold text-neutral-700 bg-neutral-50 outline-none transition focus:bg-white cursor-pointer"
-                      >
-                        <option value="Non assegnato">Non assegnato</option>
-                        <option value="Key-Ticket Agent">Key-Ticket Agent (Te)</option>
-                        <option value="Marco Rossi">Marco Rossi</option>
-                        <option value="Laura Conti">Laura Conti</option>
-                        <option value="Giulia Bianchi">Giulia Bianchi</option>
-                        <option value="Andrea Ferri">Andrea Ferri</option>
-                      </select>
-                    </div>
-
-                    {/* Action 2: Segna come risolto */}
-                    {previousView === 'active' && (
-                      <button
-                        onClick={() => resolveTicket(selectedTicket.id)}
-                        className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 font-semibold text-xs active:scale-[0.99] transition text-left cursor-pointer"
-                      >
-                        <Check size={16} className="text-green-500" />
-                        <span>Segna come risolto</span>
-                      </button>
-                    )}
-
-                    {/* Action 3: Chiudi ticket */}
-                    {previousView === 'active' && (
-                      <button
-                        onClick={() => closeOrRejectTicket(selectedTicket.id)}
-                        className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl border border-red-100 bg-red-50/20 hover:bg-red-50/50 text-red-700 font-semibold text-xs active:scale-[0.99] transition text-left cursor-pointer"
-                      >
-                        <X size={16} className="text-red-500" />
-                        <span>Chiudi ticket</span>
-                      </button>
-                    )}
-
                   </div>
-
-                  {/* Horizontal visual divider */}
-                  <div className="border-t border-neutral-100 pt-4 space-y-2.5 text-xs text-neutral-500 font-semibold">
-
-                    {/* Metadata item 1: Segnalato da */}
-                    <div className="flex items-center gap-2">
-                      <User size={14} className="text-neutral-400" />
-                      <span>Segnalato da: <span className="text-neutral-700 font-normal">{selectedTicket.reportedBy || "Cliente Occasionale"}</span></span>
-                    </div>
-
-                    {/* Metadata item 2: Assignee */}
-                    <div className="flex items-center gap-2">
-                      <UserCheck size={14} className="text-neutral-400" />
-                      <span>Assegnatario: <span className="text-neutral-700 font-normal">{selectedTicket.assignee}</span></span>
-                    </div>
-
-                    {/* Metadata item 3: Creation Date */}
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-neutral-400" />
-                      <span>Data creazione: <span className="text-neutral-700 font-normal">{selectedTicket.creationDate || selectedTicket.date}</span></span>
-                    </div>
-
-                    {/* Metadata item 4: Last Update */}
-                    <div className="flex items-center gap-2">
-                      <Clock size={14} className="text-neutral-400" />
-                      <span>Ultimo aggiornamento: <span className="text-neutral-700 font-normal">{selectedTicket.lastUpdate || selectedTicket.date}</span></span>
-                    </div>
-
-                    {/* Metadata item 5: Tags count summary */}
-                    <div className="flex items-center gap-2">
-                      <TagIcon size={14} className="text-neutral-400" />
-                      <span>{selectedTicket.tags ? selectedTicket.tags.length : 0} tag</span>
-                    </div>
-
-                  </div>
-
                 </div>
-
               </div>
             )}
 
