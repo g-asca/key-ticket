@@ -35,22 +35,24 @@ import img204 from './assets/media__1783603526204.png';
 import img205 from './assets/media__1783603526205.png';
 
 const CATEGORIES = [
-  { name: 'Sposta Data', color: '#00a49f', info: 'Modifica la data di consegna o scadenza associata a cliente e articolo.' },
-  { name: 'Non Conformità', color: '#d83b01', info: 'Segnala una non conformità di prodotto, documenti o consegna.' },
-  { name: 'Sollecito', color: '#ffb900', info: 'Invia un sollecito per attività o documenti in attesa.' },
-  { name: 'Giacenza Articolo', color: '#0078d4', info: 'Verifica la disponibilità e giacenza di un articolo.' },
-  { name: 'Reso Merce', color: '#5c2d91', info: 'Gestisci un reso merce con motivazione e dati logistici.' },
-  { name: 'Variazione Prezzo', color: '#8764b8', info: 'Proponi o richiedi una variazione di prezzo.' },
-  { name: 'Blocco Ordine', color: '#a80000', info: 'Richiedi il blocco amministrativo o operativo di un ordine.' },
-  { name: 'Sblocco Ordine', color: '#107c41', info: 'Richiedi lo sblocco di un ordine sospeso.' },
-  { name: 'Verifica Pagamento', color: '#0078d4', info: 'Verifica lo stato contabile o l\'avvenuto pagamento.' },
-  { name: 'Aggiornamento Anagrafica', color: '#002050', info: 'Aggiorna i dettagli di anagrafica clienti o contatti.' },
-  { name: 'Richiesta Fattura', color: '#7f7f7f', info: 'Richiedi emissione, rettifica o copia di una fattura.' },
-  { name: 'Reclamo Trasporto', color: '#7a24db', info: 'Segnala problemi o anomalie legate alla spedizione.' },
-  { name: 'Priorità Consegna', color: '#d83b01', info: 'Richiedi la priorità o sollecito di una consegna.' },
-  { name: 'Richiesta Documenti', color: '#008272', info: 'Richiedi certificati, schede tecniche o altri documenti.' },
-  { name: 'Cambio Vettore', color: '#8a8a8a', info: 'Richiedi il cambio del vettore incaricato del trasporto.' }
+  { name: 'Sposta Data',            color: '#00a49f', group: 'Ordini',          info: 'Modifica la data di consegna o scadenza associata a cliente e articolo.' },
+  { name: 'Non Conformità',          color: '#d83b01', group: 'Ordini',          info: 'Segnala una non conformità di prodotto, documenti o consegna.' },
+  { name: 'Sollecito',               color: '#ffb900', group: 'Ordini',          info: 'Invia un sollecito per attività o documenti in attesa.' },
+  { name: 'Blocco Ordine',           color: '#a80000', group: 'Ordini',          info: 'Richiedi il blocco amministrativo o operativo di un ordine.' },
+  { name: 'Sblocco Ordine',          color: '#107c41', group: 'Ordini',          info: 'Richiedi lo sblocco di un ordine sospeso.' },
+  { name: 'Priorità Consegna',       color: '#d83b01', group: 'Logistica',       info: 'Richiedi la priorità o sollecito di una consegna.' },
+  { name: 'Reclamo Trasporto',       color: '#7a24db', group: 'Logistica',       info: 'Segnala problemi o anomalie legate alla spedizione.' },
+  { name: 'Cambio Vettore',          color: '#8a8a8a', group: 'Logistica',       info: 'Richiedi il cambio del vettore incaricato del trasporto.' },
+  { name: 'Giacenza Articolo',       color: '#0078d4', group: 'Magazzino',       info: 'Verifica la disponibilità e giacenza di un articolo.' },
+  { name: 'Reso Merce',              color: '#5c2d91', group: 'Magazzino',       info: 'Gestisci un reso merce con motivazione e dati logistici.' },
+  { name: 'Variazione Prezzo',       color: '#8764b8', group: 'Amministrazione', info: 'Proponi o richiedi una variazione di prezzo.' },
+  { name: 'Verifica Pagamento',      color: '#0078d4', group: 'Amministrazione', info: 'Verifica lo stato contabile o l\'avvenuto pagamento.' },
+  { name: 'Aggiornamento Anagrafica',color: '#002050', group: 'Amministrazione', info: 'Aggiorna i dettagli di anagrafica clienti o contatti.' },
+  { name: 'Richiesta Fattura',       color: '#7f7f7f', group: 'Amministrazione', info: 'Richiedi emissione, rettifica o copia di una fattura.' },
+  { name: 'Richiesta Documenti',     color: '#008272', group: 'Amministrazione', info: 'Richiedi certificati, schede tecniche o altri documenti.' }
 ];
+
+const CATEGORY_GROUPS = ['Ordini', 'Magazzino', 'Logistica', 'Amministrazione'];
 
 const AzureStyleOverride = () => (
   <style dangerouslySetInnerHTML={{
@@ -135,6 +137,7 @@ export default function App() {
   };
   const [previousView, setPreviousView] = useState('active'); // Remembers origin before entering detail screen
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [createCategoryTab, setCreateCategoryTab] = useState('Tutte'); // Filter tab on create_select view
   const profileRef = useRef(null);
 
   const getFormattedDateTime = () => {
@@ -907,17 +910,23 @@ export default function App() {
                   <ChevronDown size={14} className="text-neutral-400" />
                 </button>
 
-                {/* Minimalist Account dropdown */}
+                {/* Account dropdown */}
                 {showProfileMenu && (
-                  <div className="absolute right-0 top-11 z-50 w-[200px] bg-white border border-[#d2d2d2] shadow-xl p-3.5 fade-in text-left rounded-lg">
-                    <p className="text-[13px] font-bold text-[#1b1b1b] truncate mb-3">Key-Ticket Agent</p>
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full flex items-center justify-center gap-2 border border-[#a80000] text-[#a80000] hover:bg-[#fde7e9] py-1.5 px-3 text-xs font-semibold transition duration-150 rounded-md"
-                    >
-                      <LogOut size={13} />
-                      <span>Sign out</span>
-                    </button>
+                  <div className="absolute right-0 top-11 z-50 w-[220px] bg-white border border-[#d2d2d2] shadow-xl fade-in text-left rounded-lg overflow-hidden">
+                    <div className="px-4 py-3 border-b border-neutral-100">
+                      <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-1">Account</p>
+                      <p className="text-[13px] font-semibold text-[#1b1b1b] truncate">Key-Ticket Agent</p>
+                      <p className="text-[12px] text-neutral-400 truncate">agent@keyfor.it</p>
+                    </div>
+                    <div className="px-3 py-2.5">
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition cursor-pointer border-none bg-transparent"
+                      >
+                        <LogOut size={14} className="text-neutral-500" />
+                        <span>Logout</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1238,7 +1247,6 @@ export default function App() {
 
             {subView === 'create_select' && (
               /* ================= SUB-VIEW: CATEGORY SELECTION ("Nuova richiesta") ================= */
-              /* Styled after image_81f0e6.png */
               <div className="w-full space-y-5 py-2 fade-in">
 
                 <button
@@ -1257,26 +1265,45 @@ export default function App() {
                   </p>
                 </div>
 
-                {/* Category lists dynamic map of all 15 categories */}
-                <div className="w-full flex flex-col space-y-4 pt-2">
-                  {CATEGORIES.map((cat) => (
-                    <div key={cat.name} className="w-full bg-white border border-neutral-200 rounded-lg overflow-hidden ms-card-shadow flex flex-col">
-                      <div className="h-1 w-full" style={{ backgroundColor: cat.color }}></div>
-                      <div className="p-4 flex items-center justify-between gap-4">
-                        <div className="flex flex-col text-left">
-                          <span className="text-[15px] font-semibold text-neutral-800">{cat.name}</span>
-                          <span className="text-[11px] text-neutral-400 font-normal mt-0.5 line-clamp-1">{cat.info}</span>
-                        </div>
-                        <button
-                          onClick={() => handleSelectCategory(cat.name)}
-                          className="text-[13px] font-semibold flex items-center gap-1 hover:underline cursor-pointer shrink-0 border-none bg-transparent"
-                          style={{ color: cat.color }}
-                        >
-                          Seleziona <ChevronRight size={14} />
-                        </button>
-                      </div>
-                    </div>
+                {/* Group filter tabs — Ordini / Magazzino / Logistica / Amministrazione */}
+                <div className="w-full flex items-center gap-2 overflow-x-auto pb-0.5 no-scrollbar">
+                  {['Tutte', ...CATEGORY_GROUPS].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setCreateCategoryTab(tab)}
+                      className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all border shrink-0 cursor-pointer ${
+                        createCategoryTab === tab
+                          ? 'bg-[#009b96] text-white border-[#009b96] shadow-sm'
+                          : 'bg-white text-neutral-600 border-neutral-200 hover:border-[#009b96]/50 hover:bg-[#f0f9f8]'
+                      }`}
+                    >
+                      {tab}
+                    </button>
                   ))}
+                </div>
+
+                {/* Category list — filtered by active tab */}
+                <div className="w-full flex flex-col space-y-3">
+                  {CATEGORIES
+                    .filter(cat => createCategoryTab === 'Tutte' || cat.group === createCategoryTab)
+                    .map((cat) => (
+                      <div key={cat.name} className="w-full bg-white border border-neutral-200 rounded-lg overflow-hidden ms-card-shadow flex flex-col">
+                        <div className="h-1 w-full" style={{ backgroundColor: cat.color }}></div>
+                        <div className="p-4 flex items-center justify-between gap-4">
+                          <div className="flex flex-col text-left">
+                            <span className="text-[15px] font-semibold text-neutral-800">{cat.name}</span>
+                            <span className="text-[11px] text-neutral-400 font-normal mt-0.5 line-clamp-1">{cat.info}</span>
+                          </div>
+                          <button
+                            onClick={() => handleSelectCategory(cat.name)}
+                            className="text-[13px] font-semibold flex items-center gap-1 hover:underline cursor-pointer shrink-0 border-none bg-transparent"
+                            style={{ color: cat.color }}
+                          >
+                            Seleziona <ChevronRight size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                 </div>
 
               </div>
