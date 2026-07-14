@@ -576,10 +576,17 @@ export default function App() {
 
   const handleSelectCategory = (categoryName) => {
     setSelectedCategory(categoryName);
+    setSelectedCustomer(null);
+    setSelectedItem(null);
+    setOldDate('');
+    setNewDate('');
     setFormTab('details');
     setFormNotes([]);
     setNewFormNoteText('');
     setFormAttachments([]);
+    setFormSubject('');
+    setFormDesc('');
+    setFormUrgency('Medium');
     setSubView('create_form');
   };
 
@@ -592,6 +599,10 @@ export default function App() {
         return;
       }
     } else {
+      if (!selectedCustomer) {
+        triggerNotification('Seleziona un cliente per continuare.');
+        return;
+      }
       if (!formSubject.trim()) {
         triggerNotification('Si prega di inserire un oggetto valido.');
         return;
@@ -602,7 +613,7 @@ export default function App() {
     const currentFormattedTime = getFormattedDateTime();
     const newRequest = {
       id: nextId,
-      customer: selectedCategory === 'Sposta Data' ? selectedCustomer.desc : 'Cliente Occasionale S.p.A.',
+      customer: selectedCustomer ? selectedCustomer.desc : 'Cliente Occasionale S.p.A.',
       subject: selectedCategory === 'Sposta Data'
         ? `Sposta data consegna per ${selectedItem.code}`
         : formSubject,
@@ -1481,6 +1492,23 @@ export default function App() {
                       <div className="w-full space-y-4">
                         <div className="w-full bg-white border border-neutral-200 p-5 rounded-2xl ms-card-shadow space-y-4">
                           <form onSubmit={handleCreateRequest} className="space-y-4">
+
+                            {/* Nome cliente — same lookup as Sposta Data */}
+                            <div>
+                              <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
+                                Nome cliente <span className="text-red-500">*</span>
+                              </label>
+                              <div
+                                onClick={() => { setLookupSearch(''); setActiveModal('customer'); }}
+                                className="w-full px-3.5 py-3 rounded-xl border border-neutral-200 hover:border-neutral-300 bg-neutral-50 flex justify-between items-center cursor-pointer transition"
+                              >
+                                <span className={selectedCustomer ? "text-neutral-800 text-sm font-medium" : "text-neutral-400 text-sm"}>
+                                  {selectedCustomer ? selectedCustomer.desc : "Seleziona nome cliente..."}
+                                </span>
+                                <Search size={16} className="text-neutral-400" />
+                              </div>
+                            </div>
+
                             <div>
                               <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
                                 Oggetto <span className="text-red-500">*</span>
