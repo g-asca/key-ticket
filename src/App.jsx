@@ -1298,22 +1298,26 @@ export default function App() {
                   {CATEGORIES
                     .filter(cat => createCategoryTab === 'Tutte' || cat.group === createCategoryTab)
                     .map((cat) => (
-                      <div key={cat.name} className="w-full bg-white border border-neutral-200 rounded-lg overflow-hidden ms-card-shadow flex flex-col">
+                      <button
+                        key={cat.name}
+                        type="button"
+                        onClick={() => handleSelectCategory(cat.name)}
+                        className="w-full bg-white border border-neutral-200 rounded-lg overflow-hidden ms-card-shadow flex flex-col text-left active:scale-[0.98] transition-transform cursor-pointer"
+                      >
                         <div className="h-1 w-full" style={{ backgroundColor: cat.color }}></div>
                         <div className="p-4 flex items-center justify-between gap-4">
                           <div className="flex flex-col text-left">
                             <span className="text-[15px] font-semibold text-neutral-800">{cat.name}</span>
                             <span className="text-[11px] text-neutral-400 font-normal mt-0.5 line-clamp-1">{cat.info}</span>
                           </div>
-                          <button
-                            onClick={() => handleSelectCategory(cat.name)}
-                            className="text-[13px] font-semibold flex items-center gap-1 hover:underline cursor-pointer shrink-0 border-none bg-transparent"
+                          <span
+                            className="text-[13px] font-semibold flex items-center gap-1 shrink-0"
                             style={{ color: cat.color }}
                           >
                             Seleziona <ChevronRight size={14} />
-                          </button>
+                          </span>
                         </div>
-                      </div>
+                      </button>
                     ))}
                 </div>
 
